@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-02 Automate · Tap-to-run</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l"><h1 class="title">Automate</h1></div>
+    <div class="hdr-r">
+      <button class="ibtn" type="button" aria-label="Tạo scene hoặc automation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+    </div>
+  </header>
+  <div class="body" style="gap: 16px; padding: 12px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{tabs}}" value="{{n0}}" style="width: 100%"></x-import>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <button type="button" class="card" style="height: 120px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; color: var(--text); cursor: pointer; font-family: inherit" aria-label="Chạy scene Đi ngủ">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <span class="row-main"><span class="lbl">Đi ngủ</span><span class="cap">3 hành động</span></span>
+      </button>
+      <button type="button" class="card" style="height: 120px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; color: var(--text); cursor: pointer; font-family: inherit; position: relative; background: var(--on-tint); border-color: var(--accent)" aria-label="Đang chạy scene Ra khỏi nhà" aria-busy="true">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+        <span class="row-main"><span class="lbl">Ra khỏi nhà</span><span class="cap">Đang chạy 2 / 4…</span></span>
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" style="position: absolute; top: 12px; right: 12px; transform: rotate(-90deg)"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--surface-2)" stroke-width="3"></circle><circle cx="12" cy="12" r="9" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-dasharray="56.5" stroke-dashoffset="28"></circle></svg>
+      </button>
+      <button type="button" class="card" style="height: 120px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; color: var(--text); cursor: pointer; font-family: inherit; position: relative" aria-label="Scene Xem phim vừa chạy xong">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M7 4v16"></path><path d="M17 4v16"></path><path d="M2 12h20"></path></svg>
+        <span class="row-main"><span class="lbl">Xem phim</span><span class="cap">2 hành động</span></span>
+        <span style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-radius: 999px; background: var(--success-tint); color: var(--success); display: inline-flex; align-items: center; justify-content: center" aria-label="Xong"><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span>
+      </button>
+      <button type="button" class="card" style="height: 120px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; color: var(--text); cursor: pointer; font-family: inherit" aria-label="Chạy scene Sáng dậy">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path></svg>
+        <span class="row-main"><span class="lbl">Sáng dậy</span><span class="cap">2 hành động</span></span>
+      </button>
+    </div>
+    <p class="cap" style="text-align: center">Chạm để chạy · giữ lâu để sửa hoặc xóa</p>
+  </div>
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a class="tab" href="S01-Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+    <a class="tab tab-on" href="S02-Scene.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Automate<span class="tab-dot" aria-label="Có rule lỗi"></span></a>
+    <a class="tab" href="S03-Me.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Me</a>
+  </nav>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, n0: 0, theme: this.props.dark ? 'dn-dark' : 'dn-light', tabs: ['Tap-to-run', 'Automation'] };
+  }
+}
+</script>
+</body>
+</html>

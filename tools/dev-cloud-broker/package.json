@@ -1,0 +1,26 @@
+{
+  "name": "@devicenet/dev-cloud-broker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "dev-cloud-broker": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "aedes": "^0.50.0",
+    "ws": "^8.0.0"
+  },
+  "devDependencies": {
+    "mqtt": "^5.0.0",
+    "tsx": "^4.0.0",
+    "vitest": "^1.0.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

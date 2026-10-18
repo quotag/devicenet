@@ -1,0 +1,7 @@
+{
+  "description": "crypto_box_seal test vector (libsodium). Hub B08: crypto_box_seal_open(b64d(ciphertext), b64d(pk), b64d(sk)) must equal plaintext (utf8). Encoding: standard base64 with padding.",
+  "pk": "AdEuOL/Ol58rvP+pJsTqhZMrLgfJAactKQzh/XH60B4=",
+  "sk": "00TPDmXEQ+qiM/Yb/ouZtfwhyuQtgVXxlHYPB6vaGyw=",
+  "plaintext": "{\"tenantId\":\"tenant_01J0000000000000000000000T\",\"hubId\":\"hub_01J0000000000000000000000H\",\"hello\":\"xin chào\"}",
+  "ciphertext": "hquOho7M/94c+Ei4C0R+RG4JfMNCrEFj2o2bfPdBYhpzPePfWqgjRbRLHZbtGhGFdUjWhJV9/qGNCvgjAl+q0MRQ1AIgUU8N6EfbAs6sE9y/6p2kfg+DUHS4Yd7tzuMNbIDWcDjaLt8zBG5Uyj3PqoOd20epTyGVOoAQxy7IoH1cVgWuP2P4OFFdy/Dyi0zqFhPMks8AzDNB1HnFEQ=="
+}

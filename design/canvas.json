@@ -1,0 +1,351 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-16T18:50:00Z"
+  },
+  "title": "DeviceNet – Wireframes",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "S-00 Đăng nhập"
+    },
+    "S10-CaiAgent.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "S-10 Thêm hub · 1 Cài agent"
+    },
+    "S10-NhapMa.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "S-10 Thêm hub · 2 Nhập mã"
+    },
+    "S10-MaSai.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "S-10 · 2 Mã sai"
+    },
+    "S10-KetNoi.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "S-10 Thêm hub · 3 Kết nối"
+    },
+    "S01-Home.dc.html": {
+      "x": 0,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "S-01 Home · mặc định"
+    },
+    "S01-Offline.dc.html": {
+      "x": 470,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "S-01 Home · hub offline"
+    },
+    "S01-SapXep.dc.html": {
+      "x": 940,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "S-01 Home · sắp xếp"
+    },
+    "S01-Trong.dc.html": {
+      "x": 1410,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "S-01 Home · trống"
+    },
+    "SH1-ChonSite.dc.html": {
+      "x": 1880,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "SH-1 Chọn site"
+    },
+    "SH2-MenuThem.dc.html": {
+      "x": 2350,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "SH-2 Menu +"
+    },
+    "S11-TimThietBi.dc.html": {
+      "x": 0,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "S-11 Thêm thiết bị · 2 Tìm"
+    },
+    "S11-DatTen.dc.html": {
+      "x": 470,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "S-11 Thêm thiết bị · 3 Đặt tên"
+    },
+    "S11-HetGio.dc.html": {
+      "x": 940,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "S-11 · hết giờ"
+    },
+    "S02-Scene.dc.html": {
+      "x": 0,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "S-02 Automate · Tap-to-run"
+    },
+    "S02-Automation.dc.html": {
+      "x": 470,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "S-02 Automate · Automation"
+    },
+    "S02-Trong.dc.html": {
+      "x": 940,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "S-02 Automate · trống"
+    },
+    "S30-RuleEditor.dc.html": {
+      "x": 1410,
+      "y": 2892,
+      "w": 390,
+      "h": 1100,
+      "title": "S-30 Soạn automation"
+    },
+    "S30-ChuaHopLe.dc.html": {
+      "x": 1880,
+      "y": 2892,
+      "w": 390,
+      "h": 1100,
+      "title": "S-30 · chưa hợp lệ"
+    },
+    "S30-ChonTrigger.dc.html": {
+      "x": 2350,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "S-30 Sheet chọn trigger"
+    },
+    "S20-ChiTiet.dc.html": {
+      "x": 0,
+      "y": 4112,
+      "w": 390,
+      "h": 1040,
+      "title": "S-20 Chi tiết thiết bị"
+    },
+    "S20-Offline.dc.html": {
+      "x": 470,
+      "y": 4112,
+      "w": 390,
+      "h": 1040,
+      "title": "S-20 · offline"
+    },
+    "SH4-XacNhanXoa.dc.html": {
+      "x": 940,
+      "y": 4112,
+      "w": 390,
+      "h": 844,
+      "title": "SH-4 Xác nhận xóa"
+    },
+    "S03-Me.dc.html": {
+      "x": 1410,
+      "y": 4112,
+      "w": 390,
+      "h": 844,
+      "title": "S-03 Me"
+    },
+    "S40-CaiDat.dc.html": {
+      "x": 1880,
+      "y": 4112,
+      "w": 390,
+      "h": 844,
+      "title": "S-40 Cài đặt"
+    },
+    "SH3-SuaNhanh.dc.html": {
+      "x": 2350,
+      "y": 4112,
+      "w": 390,
+      "h": 844,
+      "title": "SH-3 Sửa thiết bị nhanh"
+    },
+    "D-Home.dc.html": {
+      "x": 0,
+      "y": 5272,
+      "w": 1280,
+      "h": 900,
+      "title": "Desktop 1280 · Home (lưới 4 cột)",
+      "expand": "fill"
+    },
+    "D-RuleEditor.dc.html": {
+      "x": 1360,
+      "y": 5272,
+      "w": 1280,
+      "h": 900,
+      "title": "Desktop 1280 · Rule Editor (2 cột)",
+      "expand": "fill"
+    },
+    "D-ChiTiet.dc.html": {
+      "x": 2720,
+      "y": 5272,
+      "w": 1280,
+      "h": 900,
+      "title": "Desktop 1280 · màn khác (vd. Chi tiết thiết bị, sheet → dialog)",
+      "expand": "fill"
+    },
+    "S01-Toast.dc.html": {
+      "x": 0,
+      "y": 6542,
+      "w": 390,
+      "h": 844,
+      "title": "Toast · timeout / lỗi / có bản mới"
+    },
+    "SH5-SiteRoom.dc.html": {
+      "x": 470,
+      "y": 6542,
+      "w": 390,
+      "h": 844,
+      "title": "SH-5 Sửa / xóa / thêm room · thêm site"
+    },
+    "SH6-XoaAutomation.dc.html": {
+      "x": 940,
+      "y": 6542,
+      "w": 390,
+      "h": 844,
+      "title": "SH-6 Giữ lâu scene, automation · xác nhận xóa"
+    },
+    "S03-ChiTietHub.dc.html": {
+      "x": 1410,
+      "y": 6542,
+      "w": 390,
+      "h": 844,
+      "title": "S-03 Chi tiết hub · gỡ hub"
+    },
+    "S03-LichSu.dc.html": {
+      "x": 1880,
+      "y": 6542,
+      "w": 390,
+      "h": 844,
+      "title": "S-03 Lịch sử 7 ngày"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "S10-CaiAgent.dc.html",
+    "S10-NhapMa.dc.html",
+    "S10-MaSai.dc.html",
+    "S10-KetNoi.dc.html",
+    "S01-Home.dc.html",
+    "S01-Offline.dc.html",
+    "S01-SapXep.dc.html",
+    "S01-Trong.dc.html",
+    "SH1-ChonSite.dc.html",
+    "SH2-MenuThem.dc.html",
+    "S11-TimThietBi.dc.html",
+    "S11-DatTen.dc.html",
+    "S11-HetGio.dc.html",
+    "S02-Scene.dc.html",
+    "S02-Automation.dc.html",
+    "S02-Trong.dc.html",
+    "S30-RuleEditor.dc.html",
+    "S30-ChuaHopLe.dc.html",
+    "S30-ChonTrigger.dc.html",
+    "S20-ChiTiet.dc.html",
+    "S20-Offline.dc.html",
+    "SH4-XacNhanXoa.dc.html",
+    "S03-Me.dc.html",
+    "S40-CaiDat.dc.html",
+    "SH3-SuaNhanh.dc.html",
+    "D-Home.dc.html",
+    "D-RuleEditor.dc.html",
+    "D-ChiTiet.dc.html",
+    "S01-Toast.dc.html",
+    "SH5-SiteRoom.dc.html",
+    "SH6-XoaAutomation.dc.html",
+    "S03-ChiTietHub.dc.html",
+    "S03-LichSu.dc.html"
+  ],
+  "notes": {
+    "t-onboard": {
+      "x": 0,
+      "y": -250,
+      "text": "F1 Onboarding — S-00 Đăng nhập · S-10 Thêm hub (3 bước)",
+      "kind": "title1",
+      "maxW": 2270
+    },
+    "t-home": {
+      "x": 0,
+      "y": 714,
+      "text": "S-01 Home — mặc định · offline · sắp xếp · trống · SH-1 · SH-2",
+      "kind": "title1",
+      "maxW": 2740
+    },
+    "t-add": {
+      "x": 0,
+      "y": 1678,
+      "text": "F2 Thêm thiết bị — S-11 (3 bước)",
+      "kind": "title1",
+      "maxW": 1330
+    },
+    "t-auto": {
+      "x": 0,
+      "y": 2642,
+      "text": "S-02 Automate · S-30 Soạn rule / scene",
+      "kind": "title1",
+      "maxW": 2740
+    },
+    "t-detail": {
+      "x": 0,
+      "y": 3862,
+      "text": "S-20 Chi tiết · SH-4 Xóa · S-03 Me · S-40 Cài đặt · SH-3 Sửa nhanh",
+      "kind": "title1",
+      "maxW": 2740
+    },
+    "t-desktop": {
+      "x": 0,
+      "y": 5022,
+      "text": "Desktop 1280 — Home lưới 4 cột · Rule Editor hai cột · màn khác",
+      "kind": "title1",
+      "maxW": 4000
+    },
+    "t-extra": {
+      "x": 0,
+      "y": 6292,
+      "text": "Bổ sung — toast · room/site · xóa scene, automation · hub · lịch sử",
+      "kind": "title1",
+      "maxW": 2270
+    }
+  },
+  "designSystems": [
+    {
+      "title": "DeviceNet",
+      "namespace": "devicenet",
+      "artifact": "https://claude.ai/artifact/6qgRoqzMDeWUCW4MnzQxqD",
+      "version": "1792176116-2e63",
+      "copiedAt": "2026-10-16T18:50:00Z"
+    }
+  ]
+}

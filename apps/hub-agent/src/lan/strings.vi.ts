@@ -1,0 +1,12 @@
+export const S = {
+  setupTitle: 'Thiết lập DeviceNet Hub',
+  setupIntro: 'Mở ứng dụng DeviceNet và quét mã QR, hoặc nhập mã bên dưới để liên kết hub này.',
+  codeLabel: 'Mã liên kết',
+  expiresAt: 'Hết hạn lúc',
+  expired: 'Mã đã hết hạn. Khởi động lại hub để tạo mã mới.',
+  noCode: 'Chưa có mã liên kết. Vui lòng đợi giây lát rồi tải lại trang.',
+  claimed: 'Hub đã được liên kết (claim).',
+  webNotBuilt: 'LAN web chưa build',
+  webNotBuiltHint: 'Chạy build LAN của apps/web để có giao diện tại đây.',
+  forbidden: 'Chỉ truy cập được từ mạng nội bộ.',
+} as const;

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-30 Soạn automation · chưa hợp lệ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 1100px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr" style="padding: 0 8px">
+    <div class="hdr-l"><button class="txtbtn" type="button">Hủy</button></div>
+    <span class="lbl" style="font-size: 15px">Automation mới</span>
+    <div class="hdr-r"><button class="txtbtn" type="button" disabled style="font-weight: 600" aria-disabled="true">Lưu</button></div>
+  </header>
+  <div class="body" style="gap: 24px; padding: 16px 16px 0">
+    <div style="display: flex; gap: 12px; align-items: flex-end">
+      <button type="button" aria-label="Chọn icon" style="width: 44px; height: 44px; border-radius: 12px; border: 1px dashed var(--text-muted); background: transparent; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+      <x-import component-from-global-scope="DeviceNet.Input" label="Tên" placeholder="Ví dụ: Tắt quạt lúc 06:30" style="flex: 1"></x-import>
+    </div>
+
+    <x-import component-from-global-scope="DeviceNet.Card" title="Khi" action="{{plus}}" style="width: 100%">
+      <div class="row" style="padding: 8px 0 0; min-height: 44px">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+        <span class="row-main"><span class="lbl dn-num">Thời gian · 06:30</span><span class="cap">Mỗi ngày</span></span>
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg>
+      </div>
+    </x-import>
+
+    <x-import component-from-global-scope="DeviceNet.Card" title="Và nếu" action="{{plus}}" state="empty" style="width: 100%">
+      <div style="padding: 8px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+        <span class="cap">Không bắt buộc · 0 điều kiện</span>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="ghost">+ Thêm điều kiện</x-import>
+      </div>
+    </x-import>
+
+    <x-import component-from-global-scope="DeviceNet.Card" title="Thì" action="{{plus}}" state="invalid" error="Cần ít nhất 1 hành động để lưu" style="width: 100%">
+      <div style="padding: 8px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+        <span class="cap">Chưa có hành động nào</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <x-import component-from-global-scope="DeviceNet.Chip">Đặt thiết bị</x-import>
+          <x-import component-from-global-scope="DeviceNet.Chip">Chờ</x-import>
+          <x-import component-from-global-scope="DeviceNet.Chip">Chạy scene</x-import>
+          <x-import component-from-global-scope="DeviceNet.Chip">Thông báo</x-import>
+        </div>
+      </div>
+    </x-import>
+
+    <div class="list" style="margin: 0; opacity: .6">
+      <div class="row">
+        <span class="row-main"><span class="lbl">Bật automation</span><span class="cap">Bật được sau khi lưu</span></span>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{yes}}" disabled="{{yes}}" label="Bật automation"></x-import>
+      </div>
+    </div>
+    <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" block="{{yes}}" disabled="{{yes}}" style="width: 100%">Chạy thử (chỉ phần Thì)</x-import>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var R = window.React, D = window.DeviceNet;
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      plus: R.createElement(D.IconButton, { label: 'Thêm' }) };
+  }
+}
+</script>
+</body>
+</html>

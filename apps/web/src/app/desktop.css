@@ -1,0 +1,25 @@
+/* Desktop shell >= 900 (FR-F11, artboards D-Home / D-RuleEditor / D-ChiTiet). */
+.dshell { display: flex; height: 100dvh; background: var(--bg); color: var(--text); }
+.dside { flex: 0 0 240px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px; padding: 24px 16px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+.dside-brand { display: flex; align-items: center; gap: 12px; }
+.dside-logo { width: 36px; height: 36px; border-radius: 10px; background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.dside-site { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--text); font: 500 15px/20px var(--font-sans); cursor: pointer; }
+.dside-nav { display: flex; flex-direction: column; gap: 4px; }
+.dside-item { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--text); font: 500 15px/20px var(--font-sans); cursor: pointer; text-align: left; }
+.dside-item[aria-current="page"] { background: var(--on-tint); color: var(--accent); }
+.dside-item:focus-visible, .dside-site:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dside-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); margin-left: auto; }
+.dside-hub { margin-top: auto; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.dmain { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
+.dmain-wide { padding: 24px 32px; gap: 16px; }
+.dcol { flex: 1; min-height: 0; width: 100%; max-width: 640px; box-sizing: border-box; padding: 24px 32px; display: flex; flex-direction: column; }
+/* mobile header becomes a title row 24/30 */
+.dcol .hdr { height: auto; min-height: 44px; padding: 0 0 16px; background: transparent; border-bottom: 0; }
+.dcol .hdr .lbl, .dcol .hdr .title { font-size: 24px; line-height: 30px; font-weight: 600; }
+.dtitle-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.dtitle { margin: 0; font: 600 24px/30px var(--font-sans); }
+.dtitle-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; max-width: 1000px; }
+.dgrid-add { min-height: 120px; border: 1px dashed var(--text-muted); border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-muted); cursor: pointer; font: inherit; }
+.dre { display: grid; grid-template-columns: minmax(480px, 640px) 360px; gap: 24px; align-items: start; }
+.dre-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }

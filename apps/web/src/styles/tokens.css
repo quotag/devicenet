@@ -1,0 +1,63 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --text: #15181e;
+  --text-muted: #6b7280;
+  --border: #e3e6ec;
+  --accent: #2f6bff;
+  --on-accent: #ffffff;
+  --on-tint: #2f6bff14;
+  --success: #1f9d55;
+  --success-tint: #1f9d5524;
+  --warning: #d98a00;
+  --warning-tint: #d98a0024;
+  --danger: #d83a3a;
+  --danger-tint: #d83a3a24;
+  --lan: #0e9f8e;
+  --lan-tint: #0e9f8e24;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-button: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 20px;
+  --radius-pill: 999px;
+  --touch-min: 44px;
+  --header-h: 56px;
+  --banner-h: 32px;
+  --tile-w: 171px;
+  --tile-w-2: 358px;
+  --tile-h: 120px;
+  --icon: 24px;
+  --icon-sm: 16px;
+  --status-dot: 6px;
+  --switch-w: 44px;
+  --border-w: 1px;
+  --border-w-emphasis: 2px;
+}
+
+.dark {
+  --bg: #0f1115;
+  --surface: #181b22;
+  --surface-2: #222630;
+  --text: #f2f4f7;
+  --text-muted: #9aa3b2;
+  --border: #2a2f3a;
+  --accent: #5b8cff;
+  --on-accent: #0f1115;
+  --on-tint: #5b8cff24;
+  --success: #3dbb73;
+  --success-tint: #3dbb732e;
+  --warning: #f2a93b;
+  --warning-tint: #f2a93b2e;
+  --danger: #f06565;
+  --danger-tint: #f065652e;
+  --lan: #2cc4b0;
+  --lan-tint: #2cc4b02e;
+}

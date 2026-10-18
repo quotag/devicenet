@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>SH-5 Room và site</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="sitesw" type="button" aria-label="Đổi site: Nhà">Nhà<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    </div>
+    <div class="hdr-r">
+      <button class="ibtn" type="button" aria-label="Thêm"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+    </div>
+  </header>
+  <div class="body">
+    <div style="display: flex; gap: 8px; padding: 12px 16px 4px; overflow: hidden; white-space: nowrap">
+      <x-import component-from-global-scope="DeviceNet.Chip">Tất cả</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Bếp</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Phòng khách</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Phòng ngủ</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Sân</x-import>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 12px 16px 16px">
+      <x-import component-from-global-scope="DeviceNet.DeviceTile" size="2x1" kind="mixed" name="Ổ cắm máy giặt" value="86" unit="W" on="{{yes}}" extras="{{wm}}" icon="{{ic.plug}}" style="grid-column: span 2"></x-import>
+      <x-import component-from-global-scope="DeviceNet.DeviceTile" kind="mixed" name="Ổ cắm tủ lạnh" value="112" unit="W" on="{{yes}}" icon="{{ic.plug}}"></x-import>
+    </div>
+  </div>
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a class="tab tab-on" href="S01-Home.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+    <a class="tab" href="S02-Scene.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Automate</a>
+    <a class="tab" href="S03-Me.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Me</a>
+  </nav>
+  <div class="scrim" aria-hidden="true"></div>
+
+  <sc-if value="{{isEdit}}" hint-placeholder-val="{{yes}}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0">
+      <x-import component-from-global-scope="DeviceNet.Sheet" title="Sửa room" style="width: 100%">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <x-import component-from-global-scope="DeviceNet.Input" label="Tên room" default-value="Bếp" hint="2 thiết bị · site Nhà" style="width: 100%"></x-import>
+          <div style="display: flex; gap: 8px">
+            <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Hủy</x-import>
+            <x-import component-from-global-scope="DeviceNet.Button" variant="primary" style="flex: 1">Lưu</x-import>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border)">
+            <x-import component-from-global-scope="DeviceNet.Button" variant="danger" block="{{yes}}" style="width: 100%">Xóa room</x-import>
+            <p class="cap" style="text-align: center">Thiết bị trong room chuyển về "Chưa gán room", không bị gỡ khỏi hub.</p>
+          </div>
+        </div>
+      </x-import>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isConfirm}}" hint-placeholder-val="{{no}}">
+    <div style="position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%)">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-room" style="padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <span class="lbl" id="dlg-room" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Xóa room "Bếp"?</span>
+        <p class="body-t" style="color: var(--text-muted)">2 thiết bị sẽ chuyển về "Chưa gán room". Automation, scene và lịch sử không bị ảnh hưởng.</p>
+        <div style="display: flex; gap: 8px">
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Giữ lại</x-import>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="danger" style="flex: 1">Xóa room</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isNewRoom}}" hint-placeholder-val="{{no}}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0">
+      <x-import component-from-global-scope="DeviceNet.Sheet" title="Thêm room" style="width: 100%">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <x-import component-from-global-scope="DeviceNet.Input" label="Tên room" placeholder="Ví dụ: Phòng làm việc" hint="Trong site Nhà" style="width: 100%"></x-import>
+          <div style="display: flex; gap: 8px">
+            <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Hủy</x-import>
+            <x-import component-from-global-scope="DeviceNet.Button" variant="primary" disabled="{{yes}}" style="flex: 1">Thêm room</x-import>
+          </div>
+        </div>
+      </x-import>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isNewSite}}" hint-placeholder-val="{{no}}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0">
+      <x-import component-from-global-scope="DeviceNet.Sheet" title="Thêm site" style="width: 100%">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <x-import component-from-global-scope="DeviceNet.Input" label="Tên site" placeholder="Ví dụ: Nhà quê" hint="Múi giờ Asia/Ho_Chi_Minh, lấy theo máy này" style="width: 100%"></x-import>
+          <p class="cap">Mỗi site cần một hub riêng. Sau khi tạo, thêm hub cho site này ở mục Hub trong Me.</p>
+          <div style="display: flex; gap: 8px">
+            <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Hủy</x-import>
+            <x-import component-from-global-scope="DeviceNet.Button" variant="primary" disabled="{{yes}}" style="flex: 1">Thêm site</x-import>
+          </div>
+        </div>
+      </x-import>
+    </div>
+  </sc-if>
+  <sc-if value="{{isPick}}" hint-placeholder-val="{{no}}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0">
+      <x-import component-from-global-scope="DeviceNet.Sheet" title="Thêm" style="width: 100%">
+        <div style="display: flex; flex-direction: column">
+          <button type="button" class="row" style="border: 0; background: transparent; color: var(--text); padding: 8px 0; cursor: pointer; text-align: left; font-family: inherit; border-bottom: 1px solid var(--border)">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M17.5 14v7"></path><path d="M14 17.5h7"></path></svg>
+            <span class="row-main"><span class="lbl">Thêm room</span><span class="cap">Trong site Nhà</span></span>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg>
+          </button>
+          <button type="button" class="row" style="border: 0; background: transparent; color: var(--text); padding: 8px 0; cursor: pointer; text-align: left; font-family: inherit">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>
+            <span class="row-main"><span class="lbl">Thêm site</span><span class="cap">Mỗi site cần một hub riêng</span></span>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg>
+          </button>
+        </div>
+      </x-import>
+    </div>
+  </sc-if>
+  <div class="home" aria-hidden="true" style="background: #fff; opacity: .8"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"mode":{"editor":"enum","options":["edit","confirm","newRoom","newSite","pick"],"default":"edit","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var I = window.dnIcon;
+    var m = this.props.mode || 'edit';
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      isEdit: m === 'edit', isConfirm: m === 'confirm', isNewRoom: m === 'newRoom', isNewSite: m === 'newSite', isPick: m === 'pick',
+      wm: [{ value: 228, unit: 'V' }, { value: '0,38', unit: 'A' }],
+      ic: { plug: I('plug') } };
+  }
+}
+</script>
+</body>
+</html>

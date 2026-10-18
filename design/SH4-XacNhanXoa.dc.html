@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>SH-4 Xác nhận xóa</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="ibtn" type="button" aria-label="Quay lại"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></button>
+      <h1 class="title" style="font-size: 17px">Ổ cắm máy giặt</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <div class="body" style="gap: 20px; padding: 24px 16px 0">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <span style="width: 56px; height: 56px; border-radius: 16px; background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 32px; height: 32px"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8H6v4a6 6 0 0 0 12 0V8z"></path></svg></span>
+      <div class="row-main"><span class="dn-num" style="font-size: 32px; line-height: 38px; font-weight: 600">Đang bật · 86 W</span><span class="cap">Bếp · online</span></div>
+    </div>
+    <div class="list" style="margin: 0"><div class="row"><span class="row-main"><span class="lbl">Nguồn</span></span><span class="dn-switch" aria-hidden="true" style="background: var(--accent)"><span class="dn-switch-knob" style="transform: translateX(18px)"></span></span></div></div>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div style="position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%)">
+    <sc-if value="{{step1}}" hint-placeholder-val="{{yes}}">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-t" style="padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <span class="lbl" id="dlg-t" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Xóa "Ổ cắm máy giặt"?</span>
+        <p class="body-t" style="color: var(--text-muted)">Hub sẽ gỡ thiết bị khỏi mạng Zigbee. 1 automation đang dùng thiết bị này sẽ bị đánh dấu lỗi:</p>
+        <div class="list" style="margin: 0"><div class="row"><x-import component-from-global-scope="DeviceNet.Badge" tone="error">Sẽ lỗi</x-import><span class="lbl">Máy giặt xong</span></div></div>
+        <label style="display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer">
+          <input type="checkbox" style="width: 20px; height: 20px; margin: 0; accent-color: var(--accent)">
+          <span class="body-t">Tôi hiểu, lịch sử và biểu đồ của thiết bị sẽ mất.</span>
+        </label>
+        <div style="display: flex; gap: 8px">
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Hủy</x-import>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="danger" disabled="{{yes}}" style="flex: 1">Xóa</x-import>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{step2}}" hint-placeholder-val="{{no}}">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-t2" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; background: var(--danger-tint); border-color: var(--danger)">
+        <span class="lbl" id="dlg-t2" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Xóa vĩnh viễn?</span>
+        <p class="body-t">Không hoàn tác được. Muốn dùng lại, bạn phải ghép nối thiết bị từ đầu.</p>
+        <label style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+          <input type="checkbox" checked style="width: 20px; height: 20px; margin: 0; accent-color: var(--accent)">
+          <span class="body-t">Tôi hiểu, lịch sử và biểu đồ của thiết bị sẽ mất.</span>
+        </label>
+        <div style="display: flex; gap: 8px">
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Giữ lại</x-import>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="primary" style="flex: 1; --accent: var(--danger); --on-accent: #ffffff">Xóa thiết bị</x-import>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  <div class="home" aria-hidden="true" style="background: #fff; opacity: .8"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"step":{"editor":"enum","options":["1","2"],"default":"1","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var s = String(this.props.step || '1');
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light', step1: s === '1', step2: s === '2' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "mosquitto": {
+    "version": "2.0.22",
+    "url": "https://mosquitto.org/files/binary/win64/mosquitto-2.0.22-install-windows-x64.exe",
+    "sha256": "2d3d57d918cc8cd4a0df6c6812edf1c3d723ee813b569354ff4a021e9e1d84bc"
+  },
+  "zigbee2mqtt": {
+    "version": "2.14.2",
+    "url": "https://github.com/Koenkk/zigbee2mqtt/archive/refs/tags/2.14.2.tar.gz",
+    "sha256": "88204c51eebc24c2aa9f8bd26ce128c1f9e795e10592b7ba1793582855ebc990",
+    "pnpm": "11.26.0",
+    "node": "^22.2.0 || ^24"
+  },
+  "winsw": {
+    "version": "2.12.0",
+    "url": "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe",
+    "sha256": "05b82d46ad331cc16bdc00de5c6332c1ef818df8ceefcd49c726553209b3a0da"
+  },
+  "docker": {
+    "mosquitto": "eclipse-mosquitto:2.0.22",
+    "zigbee2mqtt": "koenkk/zigbee2mqtt:2.14.2",
+    "node": "22-slim"
+  }
+}

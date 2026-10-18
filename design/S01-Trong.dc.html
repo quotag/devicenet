@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-01 Home · trống</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="sitesw" type="button" aria-label="Đổi site: Nhà">Nhà<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    </div>
+    <div class="hdr-r">
+      <button class="ibtn" type="button" aria-label="Thêm"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+    </div>
+  </header>
+  <div class="body">
+    <sc-if value="{{isLoading}}" hint-placeholder-val="{{no}}">
+      <div style="display: flex; gap: 8px; padding: 12px 16px 4px">
+        <div class="sk" style="width: 72px; height: 36px; border-radius: 999px"></div>
+        <div class="sk" style="width: 56px; height: 36px; border-radius: 999px"></div>
+        <div class="sk" style="width: 96px; height: 36px; border-radius: 999px"></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 12px 16px 16px" aria-label="Đang tải">
+        <div class="sk" style="height: 120px; border-radius: 16px"></div>
+        <div class="sk" style="height: 120px; border-radius: 16px"></div>
+        <div class="sk" style="height: 120px; border-radius: 16px"></div>
+        <div class="sk" style="height: 120px; border-radius: 16px"></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{yes}}">
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 48px 32px; text-align: center">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 120px" aria-hidden="true">
+          <div style="height: 40px; border-radius: 10px; border: 2px dashed var(--border)"></div>
+          <div style="height: 40px; border-radius: 10px; border: 2px dashed var(--border)"></div>
+          <div style="height: 40px; border-radius: 10px; border: 2px dashed var(--border)"></div>
+          <div style="height: 40px; border-radius: 10px; background: var(--on-tint); border: 2px solid var(--accent)"></div>
+        </div>
+        <span class="lbl" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Chưa có thiết bị nào</span>
+        <p class="body-t" style="color: var(--text-muted)">Giữ nút trên thiết bị Zigbee 5 giây đến khi đèn nháy, rồi bấm nút dưới để hub tìm nó.</p>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="primary">Thêm thiết bị đầu tiên</x-import>
+      </div>
+    </sc-if>
+    <sc-if value="{{isRoomEmpty}}" hint-placeholder-val="{{no}}">
+      <div style="display: flex; gap: 8px; padding: 12px 16px 4px; overflow: hidden; white-space: nowrap">
+        <x-import component-from-global-scope="DeviceNet.Chip">Tất cả</x-import>
+        <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Bếp</x-import>
+        <x-import component-from-global-scope="DeviceNet.Chip">Phòng khách</x-import>
+        <x-import component-from-global-scope="DeviceNet.Chip">Phòng ngủ</x-import>
+        <x-import component-from-global-scope="DeviceNet.Chip">Sân</x-import>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 48px 32px; text-align: center">
+        <span class="lbl" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Chưa có thiết bị trong Bếp</span>
+        <p class="body-t" style="color: var(--text-muted)">Gán thiết bị có sẵn vào room này, hoặc thêm thiết bị mới.</p>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="secondary">Gán thiết bị vào Bếp</x-import>
+      </div>
+    </sc-if>
+  </div>
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a class="tab tab-on" href="S01-Home.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+    <a class="tab" href="S02-Trong.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Automate</a>
+    <a class="tab" href="S03-Me.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Me</a>
+  </nav>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"state":{"editor":"enum","options":["empty","roomEmpty","loading"],"default":"empty","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var s = this.props.state || 'empty';
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      isEmpty: s === 'empty', isRoomEmpty: s === 'roomEmpty', isLoading: s === 'loading' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>SH-1 Chọn site</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="sitesw" type="button" aria-expanded="true" aria-label="Đổi site: Nhà">Nhà<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg></button>
+    </div>
+    <div class="hdr-r">
+      <button class="ibtn" type="button" aria-label="Thêm"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+    </div>
+  </header>
+  <div class="body">
+    <div style="display: flex; gap: 8px; padding: 12px 16px 4px; overflow: hidden; white-space: nowrap">
+      <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Tất cả</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Bếp</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Phòng khách</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip">Phòng ngủ</x-import>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 12px 16px 16px">
+      <x-import component-from-global-scope="DeviceNet.DeviceTile" size="2x1" kind="mixed" name="Ổ cắm máy giặt" room="Bếp" value="86" unit="W" on="{{yes}}" extras="{{wm}}" icon="{{ic.plug}}" style="grid-column: span 2"></x-import>
+      <x-import component-from-global-scope="DeviceNet.DeviceTile" kind="mixed" name="Ổ cắm tủ lạnh" room="Bếp" value="112" unit="W" on="{{yes}}" icon="{{ic.plug}}"></x-import>
+      <x-import component-from-global-scope="DeviceNet.DeviceTile" kind="switch" name="Công tắc đèn khách" room="Phòng khách" on="{{no}}" icon="{{ic.toggle}}"></x-import>
+    </div>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0">
+    <x-import component-from-global-scope="DeviceNet.Sheet" title="Chọn site" style="width: 100%">
+      <div style="display: flex; flex-direction: column">
+        <button type="button" class="row" style="border: 0; background: transparent; color: var(--text); padding: 8px 0; cursor: pointer; text-align: left; border-bottom: 1px solid var(--border)" aria-pressed="true">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>
+          <span class="row-main"><span class="lbl">Nhà</span><span class="cap">Hub Nhà · 6 thiết bị · online</span></span>
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><path d="M20 6L9 17l-5-5"></path></svg>
+        </button>
+        <button type="button" class="row" style="border: 0; background: transparent; color: var(--text); padding: 8px 0; cursor: pointer; text-align: left; border-bottom: 1px solid var(--border)" aria-pressed="false">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+          <span class="row-main"><span class="lbl">[SITE KHÁC]</span><span class="cap">Chưa có hub</span></span>
+        </button>
+        <button type="button" class="row" style="border: 0; background: transparent; color: var(--accent); padding: 8px 0; cursor: pointer; text-align: left">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+          <span class="lbl">Thêm site</span>
+        </button>
+      </div>
+    </x-import>
+  </div>
+  <div class="home" aria-hidden="true" style="background: #fff; opacity: .8"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var I = window.dnIcon;
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      wm: [{ value: 228, unit: 'V' }, { value: '0,38', unit: 'A' }],
+      ic: { plug: I('plug'), toggle: I('toggle') } };
+  }
+}
+</script>
+</body>
+</html>

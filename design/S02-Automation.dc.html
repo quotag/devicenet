@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-02 Automate · Automation</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l"><h1 class="title">Automate</h1></div>
+    <div class="hdr-r">
+      <button class="ibtn" type="button" aria-label="Tạo scene hoặc automation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+    </div>
+  </header>
+  <div class="body" style="gap: 12px; padding: 12px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{tabs}}" value="{{n1}}" style="width: 100%; margin-bottom: 4px"></x-import>
+
+    <a href="S30-RuleEditor.dc.html" class="card" style="display: flex; flex-direction: column; gap: 8px; color: var(--text); text-decoration: none; border-radius: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="row-main"><span class="lbl">Máy giặt xong</span><span class="cap">Khi công suất Ổ cắm máy giặt &lt; 5 W trong 3 phút</span></span>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{yes}}" label="Bật automation Máy giặt xong"></x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import>
+        <span class="cap dn-num">Chạy lần cuối 07:02</span>
+      </div>
+    </a>
+
+    <a href="S30-RuleEditor.dc.html" class="card" style="display: flex; flex-direction: column; gap: 8px; color: var(--text); text-decoration: none; border-radius: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="row-main"><span class="lbl">Tắt quạt lúc 06:30</span><span class="cap">Mỗi ngày lúc 06:30</span></span>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{yes}}" pending="{{yes}}" label="Đang đồng bộ automation Tắt quạt"></x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <x-import component-from-global-scope="DeviceNet.Badge" tone="syncing">Đang đồng bộ</x-import>
+        <span class="cap">Đã lưu, hub đang nạp…</span>
+      </div>
+    </a>
+
+    <a href="S30-RuleEditor.dc.html" class="card" style="display: flex; flex-direction: column; gap: 8px; color: var(--text); text-decoration: none; border-radius: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="row-main"><span class="lbl">Bật đèn sân khi mặt trời lặn</span><span class="cap">Lúc mặt trời lặn · Nhà</span></span>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{no}}" disabled="{{yes}}" label="Automation lỗi, không bật được"></x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <x-import component-from-global-scope="DeviceNet.Badge" tone="error">Lỗi</x-import>
+        <span class="cap">Thiết bị không còn: Đèn sân</span>
+      </div>
+    </a>
+
+    <a href="S30-RuleEditor.dc.html" class="card" style="display: flex; flex-direction: column; gap: 8px; color: var(--text); text-decoration: none; border-radius: 12px; opacity: .6">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="row-main"><span class="lbl">Báo khi công suất &gt; 1500 W</span><span class="cap">Khi Ổ cắm máy giặt · công suất &gt; 1500 W</span></span>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{no}}" label="Bật automation Báo công suất"></x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="cap">Đã tắt · chạy lần cuối 18:05 hôm qua</span>
+      </div>
+    </a>
+  </div>
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a class="tab" href="S01-Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+    <a class="tab tab-on" href="S02-Automation.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Automate<span class="tab-dot" aria-label="Có rule lỗi"></span></a>
+    <a class="tab" href="S03-Me.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Me</a>
+  </nav>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, no: false, n1: 1, theme: this.props.dark ? 'dn-dark' : 'dn-light', tabs: ['Tap-to-run', 'Automation'] };
+  }
+}
+</script>
+</body>
+</html>

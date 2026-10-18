@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-30 Sheet chọn trigger thiết bị</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr" style="padding: 0 8px">
+    <div class="hdr-l"><button class="txtbtn" type="button">Hủy</button></div>
+    <span class="lbl" style="font-size: 15px">Automation mới</span>
+    <div class="hdr-r"><button class="txtbtn" type="button" disabled style="font-weight: 600">Lưu</button></div>
+  </header>
+  <div class="body" style="gap: 24px; padding: 16px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.Input" label="Tên" placeholder="Ví dụ: Máy giặt xong" style="width: 100%"></x-import>
+    <x-import component-from-global-scope="DeviceNet.Card" title="Khi" state="empty" style="width: 100%"><span class="cap">Chọn 1 trigger</span></x-import>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0">
+    <x-import component-from-global-scope="DeviceNet.Sheet" title="Thêm trigger" style="width: 100%">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{kinds}}" value="{{n0}}" style="width: 100%"></x-import>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span class="lbl">Thiết bị</span>
+          <button type="button" class="dn-input" style="width: 100%; border: 1px solid transparent; cursor: pointer; justify-content: space-between; font-family: inherit">
+            <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--text)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8H6v4a6 6 0 0 0 12 0V8z"></path></svg><span class="lbl">Ổ cắm máy giặt</span><span class="cap">· Bếp</span></span>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Thuộc tính</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Công suất</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Trạng thái</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Điện áp</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Dòng điện</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Phép so sánh</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap" role="group" aria-label="Phép so sánh">
+            <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">nhỏ hơn</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">≤</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">bằng</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">≠</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">≥</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">lớn hơn</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">đổi sang</x-import>
+          </div>
+          <span class="cap">"đổi sang" kích hoạt mỗi khi giá trị thay đổi, không cần nhập giá trị</span>
+        </div>
+        <div style="display: flex; gap: 12px">
+          <x-import component-from-global-scope="DeviceNet.Input" label="Giá trị" default-value="5" unit="W" input-mode="decimal" style="flex: 1"></x-import>
+          <x-import component-from-global-scope="DeviceNet.Input" label="Liên tục trong" default-value="3" unit="phút" input-mode="numeric" hint="Tùy chọn" style="flex: 1"></x-import>
+        </div>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" style="width: 100%">Thêm trigger</x-import>
+      </div>
+    </x-import>
+  </div>
+  <div class="home" aria-hidden="true" style="background: #fff; opacity: .8"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, no: false, n0: 0, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      kinds: ['Thiết bị', 'Thời gian', 'Mặt trời'] };
+  }
+}
+</script>
+</body>
+</html>

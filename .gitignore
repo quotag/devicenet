@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.tools/
+*.log
+.env
+.env.*
+!.env.example
+.firebase/
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+dataDir/
+.data/
+.turbo/

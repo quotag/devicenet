@@ -1,0 +1,112 @@
+rules_version = '2';
+// DeviceNet Firestore Security Rules — tenant isolation, layer 1 of 3 (others: EMQX ACL, API checks)
+//
+// Principals:
+//   user  : Firebase Auth (Google). Custom claims: tenant (string), acl (object, for EMQX only)
+//   hub   : Firebase Auth custom token minted by the API. Claims: tenant, hubId, role = "hub"
+//   api   : Admin SDK (bypasses rules) — the ONLY writer of tenants/*, members.role, hubs/*/private
+//
+// NOTE: hub-agent MUST sign in with the client SDK + custom token for these rules to apply.
+// Admin SDK on the hub would bypass everything (that was the bug in Tech Description v1).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function tenantOk(t) { return signedIn() && request.auth.token.tenant == t; }
+    function isHub() { return signedIn() && request.auth.token.role == 'hub'; }
+    function isUser() { return signedIn() && request.auth.token.role != 'hub'; }
+    function isThisHub(h) { return isHub() && request.auth.token.hubId == h; }
+    function onlyChanging(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // Root: claim codes — never from clients
+    match /claimCodes/{code} { allow read, write: if false; }
+
+    match /tenants/{t} {
+      allow read: if tenantOk(t);
+      allow write: if false; // api only
+
+      match /members/{uid} {
+        allow read: if tenantOk(t);
+        allow update: if tenantOk(t) && isUser() && request.auth.uid == uid && onlyChanging(['prefs', 'fcmTokens']);
+        allow create, delete: if false; // api
+      }
+
+      match /sites/{s} {
+        allow read: if tenantOk(t);
+        allow create, update, delete: if tenantOk(t) && isUser();
+        match /rooms/{r} {
+          allow read: if tenantOk(t);
+          allow write: if tenantOk(t) && isUser();
+        }
+      }
+
+      match /hubs/{h} {
+        allow read: if tenantOk(t);
+        // user: rename / move site only
+        allow update: if tenantOk(t) && isUser() && onlyChanging(['name', 'siteId']);
+        // hub: liveness/version fields only (api webhook also mirrors these via Admin SDK)
+        allow update: if tenantOk(t) && isThisHub(h)
+          && onlyChanging(['online', 'lastSeen', 'agentVersion', 'z2mVersion', 'platform', 'lanUrl', 'ip', 'deviceCount', 'drivers']);
+        allow create, delete: if false; // api
+        match /private/{doc} { allow read, write: if false; } // api only (secret hash)
+      }
+
+      match /devices/{d} {
+        allow read: if tenantOk(t);
+        // hub creates devices for itself and owns driver-derived fields
+        allow create: if tenantOk(t) && isThisHub(request.resource.data.hubId)
+          && request.resource.data.status == 'new';
+        allow update: if tenantOk(t) && isThisHub(resource.data.hubId)
+          && onlyChanging(['properties', 'model', 'vendor', 'description', 'firmware', 'status', 'removedAt', 'updatedAt', 'externalId']);
+        // user owns presentation fields; status may go new -> active (after naming) but never to 'removed' (hub does that after Zigbee remove)
+        allow update: if tenantOk(t) && isUser()
+          && onlyChanging(['name', 'roomId', 'icon', 'primaryProperty', 'toggleProperty', 'status', 'updatedAt', 'properties'])
+          && (request.resource.data.status == resource.data.status
+              || (resource.data.status == 'new' && request.resource.data.status == 'active'))
+          // user may only edit `label` inside properties — enforced in app; rules keep it coarse
+          ;
+        allow delete: if false; // soft delete only
+      }
+
+      match /scenes/{id} {
+        allow read: if tenantOk(t);
+        allow create, delete: if tenantOk(t) && isUser();
+        allow update: if tenantOk(t) && isUser()
+          && onlyChanging(['name', 'icon', 'actions', 'rev', 'updatedAt', 'siteId', 'hubId'])
+          && request.resource.data.rev == resource.data.rev + 1;
+        allow update: if tenantOk(t) && isThisHub(resource.data.hubId)
+          && onlyChanging(['appliedRev', 'lastRunAt', 'lastResult', 'brokenReason']);
+      }
+
+      match /rules/{id} {
+        allow read: if tenantOk(t);
+        allow create, delete: if tenantOk(t) && isUser();
+        allow update: if tenantOk(t) && isUser()
+          && onlyChanging(['name', 'icon', 'enabled', 'trigger', 'conditions', 'actions', 'rev', 'updatedAt', 'siteId', 'hubId'])
+          && request.resource.data.rev == resource.data.rev + 1;
+        allow update: if tenantOk(t) && isThisHub(resource.data.hubId)
+          && onlyChanging(['appliedRev', 'lastRunAt', 'lastResult', 'brokenReason']);
+      }
+
+      match /layouts/{siteId} {
+        allow read: if tenantOk(t);
+        allow write: if tenantOk(t) && isUser();
+      }
+
+      match /events/{e} {
+        allow read: if tenantOk(t);
+        allow create: if tenantOk(t) && isThisHub(request.resource.data.hubId);
+        allow update, delete: if false; // TTL policy on expireAt removes them
+      }
+
+      match /snapshots/{d}/{bucket} { // Phase 2
+        allow read: if tenantOk(t);
+        allow create: if tenantOk(t) && isHub();
+        allow update, delete: if false;
+      }
+    }
+  }
+}

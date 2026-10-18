@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: DeviceNet Hub LAN API (hub-agent, http://<ip>:8080)
+  version: 1.0.0
+  description: |
+    Served by hub-agent `lan/web` module. v1: NO auth, binds only to LAN interfaces, can be disabled in settings.
+    The `lan` PWA build reads config here and talks MQTT to Mosquitto WS on :9001 with the SAME topic contract.
+    Also serves the PWA static build at `/` and the claim page at `/setup`.
+servers: [{ url: "http://192.168.1.20:8080" }]
+paths:
+  /setup:
+    get:
+      summary: Human page showing the claim code + QR (QR encodes `devicenet://claim?code=XXXXXXXX`).
+      responses: { "200": { description: HTML } }
+  /api/health:
+    get:
+      summary: Liveness for installers/watchdog
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  agentVersion: { type: string }
+                  z2m: { type: string, enum: [online, offline, starting] }
+                  z2mVersion: { type: string }
+                  mqttLocal: { type: boolean }
+                  mqttCloud: { type: boolean }
+                  firestore: { type: boolean }
+                  claimed: { type: boolean }
+                  ts: { type: integer }
+  /api/config:
+    get:
+      summary: Snapshot of tenant config cached from Firestore (SQLite), for the LAN build.
+      description: ETag = config rev hash; client polls every 30 s when on LAN (Firestore listener unavailable offline).
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tenantId, hubId, site, rooms, devices, scenes, rules, layout, cachedAt]
+                properties:
+                  tenantId: { type: string }
+                  hubId: { type: string }
+                  site: { $ref: "#/components/schemas/Any" }
+                  rooms: { type: array, items: { $ref: "#/components/schemas/Any" } }
+                  devices: { type: array, items: { $ref: "#/components/schemas/Any" }, description: Device docs (firestore.ts) }
+                  scenes: { type: array, items: { $ref: "#/components/schemas/Any" } }
+                  rules: { type: array, items: { $ref: "#/components/schemas/Any" } }
+                  layout: { $ref: "#/components/schemas/Any" }
+                  cachedAt: { type: integer, description: last successful Firestore sync }
+  /api/history/{deviceId}/{property}:
+    get:
+      summary: Numeric history from hub SQLite (US-13, PropertyChart 24h)
+      parameters:
+        - { name: deviceId, in: path, required: true, schema: { type: string } }
+        - { name: property, in: path, required: true, schema: { type: string } }
+        - { name: from, in: query, schema: { type: integer }, description: epoch ms, default now-24h }
+        - { name: to, in: query, schema: { type: integer } }
+        - { name: step, in: query, schema: { type: integer, default: 300 }, description: bucket seconds (avg) }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  points: { type: array, items: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }, description: "[ts, value]" }
+  /api/events:
+    get:
+      summary: Automation log from hub SQLite (US-16) — same shape as Firestore events
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 500 } }
+        - { name: before, in: query, schema: { type: integer } }
+      responses: { "200": { description: ok } }
+  /api/lan-settings:
+    put:
+      summary: Toggle LAN page / set bind interface (from S-40 via cloud? NO — v1 only via local config.yaml). Reserved.
+      responses: { "501": { description: Not implemented in v1 } }
+components:
+  schemas:
+    Any: { description: See contracts/firestore.ts }

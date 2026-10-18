@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-11 Thêm thiết bị · Đặt tên</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="ibtn" type="button" aria-label="Quay lại"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></button>
+      <h1 class="title">Thêm thiết bị</h1>
+    </div>
+    <div class="hdr-r"><button class="txtbtn" type="button">Hủy</button></div>
+  </header>
+  <div class="body" style="gap: 16px; padding: 16px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.Stepper" steps="{{steps}}" current="{{n2}}" style="width: 100%"></x-import>
+    <x-import component-from-global-scope="DeviceNet.Card" style="width: 100%">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span class="row-main"><span class="lbl">TS011F · Tuya</span><span class="cap">1 / 1 thiết bị</span></span>
+          <x-import component-from-global-scope="DeviceNet.Badge" tone="new">Mới</x-import>
+        </div>
+        <x-import component-from-global-scope="DeviceNet.Input" label="Tên thiết bị" default-value="Ổ cắm máy giặt" style="width: 100%"></x-import>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Room</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Bếp</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Phòng khách</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Phòng ngủ</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Sân</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip" add="{{yes}}">Room mới</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Icon</span>
+          <div style="display: flex; gap: 8px" role="radiogroup" aria-label="Icon thiết bị">
+            <button type="button" role="radio" aria-checked="true" aria-label="Ổ cắm" style="width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--accent); background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8H6v4a6 6 0 0 0 12 0V8z"></path></svg></button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Công tắc" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8a7 7 0 0 1 0 14H8A7 7 0 0 1 8 5z"></path><path d="M8 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"></path></svg></button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Đèn" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.1 14c.6-.7 1.9-1.6 1.9-4a5 5 0 0 0-10 0c0 2.4 1.3 3.3 1.9 4 .4.5.6 1.2.6 2h5c0-.8.2-1.5.6-2z"></path></svg></button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Quạt" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M12 10V4a3 3 0 0 1 3 3"></path><path d="M14 12h6a3 3 0 0 1-3 3"></path><path d="M12 14v6a3 3 0 0 1-3-3"></path><path d="M10 12H4a3 3 0 0 1 3-3"></path></svg></button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Điện năng" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg></button>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span class="lbl">Thuộc tính chính trên tile</span>
+          <div class="list" style="margin: 0" role="radiogroup" aria-label="Thuộc tính chính">
+            <div class="row"><span class="radio radio-on" aria-hidden="true"></span><span class="row-main"><span class="lbl">Công suất</span><span class="cap">power · W</span></span><span class="lbl dn-num">86 W</span></div>
+            <div class="row"><span class="radio" aria-hidden="true"></span><span class="row-main"><span class="lbl">Điện áp</span><span class="cap">voltage · V</span></span><span class="lbl dn-num">228 V</span></div>
+            <div class="row"><span class="radio" aria-hidden="true"></span><span class="row-main"><span class="lbl">Dòng điện</span><span class="cap">current · A</span></span><span class="lbl dn-num">0,38 A</span></div>
+            <div class="row"><span class="radio" aria-hidden="true"></span><span class="row-main"><span class="lbl">Điện năng</span><span class="cap">energy · kWh</span></span><span class="lbl dn-num">12,4 kWh</span></div>
+          </div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+  <div style="padding: 16px 16px 40px; display: flex; gap: 8px">
+    <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Lưu tất cả</x-import>
+    <x-import component-from-global-scope="DeviceNet.Button" variant="primary" style="flex: 1">Lưu</x-import>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, n2: 2, theme: this.props.dark ? 'dn-dark' : 'dn-light', steps: ['Chọn hub', 'Tìm thiết bị', 'Đặt tên'] };
+  }
+}
+</script>
+</body>
+</html>

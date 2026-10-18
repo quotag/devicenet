@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-10 Thêm hub · Mã sai</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="ibtn" type="button" aria-label="Quay lại"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></button>
+      <h1 class="title">Thêm hub</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <x-import component-from-global-scope="DeviceNet.Banner" kind="error" style="width: 100%">Mã không đúng hoặc đã hết hạn</x-import>
+  <div class="body" style="gap: 20px; padding: 16px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.Stepper" steps="{{steps}}" current="{{n1}}" style="width: 100%"></x-import>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h2 class="title" style="font-size: 20px">Nhập mã của hub</h2>
+      <p class="body-t" style="color: var(--text-muted)">Mã hiện ở trang <span class="dn-num">http://&lt;ip&gt;:8080/setup</span> hoặc trong log của agent.</p>
+    </div>
+    <div style="display: flex; gap: 6px; justify-content: space-between" role="group" aria-label="Mã 8 ký tự, không hợp lệ">
+      <div class="codecell codecell-bad dn-num">K</div>
+      <div class="codecell codecell-bad dn-num">7</div>
+      <div class="codecell codecell-bad dn-num">M</div>
+      <div class="codecell codecell-bad dn-num">2</div>
+      <div class="codecell codecell-bad dn-num">X</div>
+      <div class="codecell codecell-bad dn-num">9</div>
+      <div class="codecell codecell-bad dn-num">A</div>
+      <div class="codecell codecell-bad dn-num">4</div>
+    </div>
+    <p class="cap" style="color: var(--danger)">Mã sai hoặc đã hết hạn. Ô rung 300 ms một lần, giữ nguyên nội dung để sửa.</p>
+    <div class="card" style="display: flex; flex-direction: column; gap: 12px">
+      <span class="lbl">Lấy mã mới ở hub</span>
+      <p class="body-t">Mở <span class="dn-num">http://&lt;ip&gt;:8080/setup</span> trên máy chạy agent, hoặc khởi động lại agent để in mã mới.</p>
+      <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" block="{{yes}}" style="width: 100%">Tôi đã có mã mới</x-import>
+    </div>
+    <p class="cap">Nếu hub báo "thuộc tài khoản khác": reset hub bằng lệnh <span class="dn-num">devicenet-agent reset</span> rồi lấy mã mới.</p>
+  </div>
+  <div style="padding: 16px 16px 40px">
+    <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" style="width: 100%">Thử lại</x-import>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, n1: 1, theme: this.props.dark ? 'dn-dark' : 'dn-light', steps: ['Cài agent', 'Nhập mã', 'Kết nối'] };
+  }
+}
+</script>
+</body>
+</html>

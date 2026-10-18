@@ -1,0 +1,40 @@
+# Image tags are pinned to installers/versions.json (docker.*). Run from /opt/devicenet via devicenet.service.
+# Zigbee dongle: set ZIGBEE_DEVICE in .env to the /dev/serial/by-id/... path (install.sh does this).
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    restart: unless-stopped
+    ports: ["1883:1883", "9001:9001"]
+    volumes:
+      - ./data/mosquitto:/mosquitto/data
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:2.14.2
+    restart: unless-stopped
+    depends_on: [mosquitto]
+    environment:
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+      # Z2M env overrides (no configuration.yaml seeding needed): broker is the sibling container
+      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
+      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyACM0
+      ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "false"
+    volumes:
+      - ./data/z2m:/app/data
+    devices:
+      - ${ZIGBEE_DEVICE:-/dev/serial/by-id/zigbee-dongle}:/dev/ttyACM0
+  hub-agent:
+    image: ${HUB_AGENT_IMAGE:-devicenet/hub-agent:latest}
+    build:
+      context: ../..
+      dockerfile: apps/hub-agent/Dockerfile
+    restart: unless-stopped
+    depends_on: [mosquitto, zigbee2mqtt]
+    ports: ["8080:8080"]
+    environment:
+      DN_DATA_DIR: /data
+      DN_MOCK_Z2M: "0"
+      # Mosquitto + Z2M are separate containers: the hub must not spawn them (OQ-B21-2)
+      DN_EXTERNAL_SERVICES: "1"
+      DN_MQTT_HOST: mosquitto
+    volumes:
+      - ./data/hub:/data

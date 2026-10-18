@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Desktop · Chi tiết thiết bị</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+.dside a{color:var(--text)}.dside a:hover{color:var(--text)}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; min-height: 900px; display: flex; flex-wrap: wrap; align-items: stretch">
+  <aside class="dside" style="flex: 0 1 240px; min-width: 200px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 24px; padding: 24px 16px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 36px; height: 36px; border-radius: 10px; background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"></path><path d="M6 18h.01"></path><path d="M10 18h.01"></path><path d="M15 10v4"></path><path d="M17.84 7.17a4 4 0 0 0-5.66 0"></path><path d="M20.66 4.34a8 8 0 0 0-11.31 0"></path></svg></span>
+      <span class="lbl" style="font-size: 17px">DeviceNet</span>
+    </div>
+    <button class="sitesw" type="button" style="font-size: 15px; justify-content: space-between; width: 100%; padding: 0 12px; background: var(--surface-2); border-radius: 12px" aria-label="Đổi site: Nhà">Nhà<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <nav aria-label="Điều hướng chính" style="display: flex; flex-direction: column; gap: 4px">
+      <a href="D-Home.dc.html" aria-current="page" class="row" style="text-decoration: none; border-radius: 12px; background: var(--on-tint); color: var(--accent); font-weight: 500"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+      <a href="D-RuleEditor.dc.html" class="row" style="text-decoration: none; border-radius: 12px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Automate</a>
+      <a href="S03-Me.dc.html" class="row" style="text-decoration: none; border-radius: 12px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Me</a>
+    </nav>
+    <div style="margin-top: auto" class="card">
+      <div style="display: flex; align-items: center; gap: 8px"><span class="dot" style="background: var(--success)"></span><span class="lbl">Hub Nhà</span></div>
+      <p class="cap dn-num" style="margin-top: 4px">online · v1.2.0 · 6 thiết bị</p>
+    </div>
+  </aside>
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px 32px">
+    <div style="max-width: 640px; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <a class="ibtn" href="D-Home.dc.html" aria-label="Quay lại Home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></a>
+          <h1 class="title" style="font-size: 24px; line-height: 30px">Ổ cắm máy giặt</h1>
+        </div>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="secondary">Sửa</x-import>
+      </div>
+
+      <div class="card" style="display: flex; align-items: center; gap: 16px; padding: 16px">
+        <span style="width: 56px; height: 56px; border-radius: 16px; background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 32px; height: 32px"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8H6v4a6 6 0 0 0 12 0V8z"></path></svg></span>
+        <div class="row-main">
+          <span class="dn-num" style="font-size: 32px; line-height: 38px; font-weight: 600">Đang bật · 86 W</span>
+          <span class="cap">Bếp · online · cập nhật 12 giây trước</span>
+        </div>
+        <x-import component-from-global-scope="DeviceNet.Switch" checked="{{yes}}" label="Tắt Ổ cắm máy giặt"></x-import>
+      </div>
+
+      <div>
+        <p class="cap" style="margin: 0 0 8px">Điều khiển</p>
+        <div class="list" style="margin: 0">
+          <div class="row"><span class="row-main"><span class="lbl">Nguồn</span><span class="cap">state · rw</span></span><x-import component-from-global-scope="DeviceNet.Switch" checked="{{yes}}" label="Nguồn"></x-import></div>
+          <div class="row"><span class="row-main"><span class="lbl">Đèn LED chỉ thị</span><span class="cap">indicator_mode · enum</span></span><x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{led}}" value="{{n1}}" style="width: 160px"></x-import></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap" style="margin: 0 0 8px">Cảm biến</p>
+        <div class="list" style="margin: 0">
+          <button type="button" class="row" style="width: 100%; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; font-family: inherit"><span class="row-main"><span class="lbl">Công suất</span><span class="cap">cập nhật 12 giây trước</span></span><span class="lbl dn-num" style="font-size: 17px">86 W</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg></button>
+          <button type="button" class="row" style="width: 100%; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; font-family: inherit"><span class="row-main"><span class="lbl">Điện áp</span><span class="cap">cập nhật 12 giây trước</span></span><span class="lbl dn-num" style="font-size: 17px">228 V</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg></button>
+          <button type="button" class="row" style="width: 100%; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; font-family: inherit"><span class="row-main"><span class="lbl">Dòng điện</span><span class="cap">cập nhật 12 giây trước</span></span><span class="lbl dn-num" style="font-size: 17px">0,38 A</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg></button>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap" style="margin: 0 0 8px">Kỹ thuật</p>
+        <div class="list" style="margin: 0">
+          <div class="kv"><span class="cap">Driver</span><span class="lbl dn-num">zigbee2mqtt · TS011F</span></div>
+          <div class="kv"><span class="cap">Hãng · model</span><span class="lbl">Tuya · TS011F_plug_1</span></div>
+          <div class="kv"><span class="cap">LQI</span><span class="lbl dn-num">112 / 255</span></div>
+        </div>
+      </div>
+
+      <div style="max-width: 240px">
+        <x-import component-from-global-scope="DeviceNet.Button" variant="danger" block="{{yes}}" style="width: 100%">Xóa thiết bị</x-import>
+      </div>
+      <p class="cap">Màn không có artboard desktop riêng: nội dung mobile đặt trong cột max 640 px cạnh sidebar; header mobile thành hàng tiêu đề 24 px; sheet thành dialog giữa màn hình rộng 480 px.</p>
+    </div>
+  </main>
+
+  <sc-if value="{{showDialog}}" hint-placeholder-val="{{no}}">
+    <div class="scrim" aria-hidden="true"></div>
+    <div style="position: absolute; left: 50%; top: 96px; width: 480px; max-width: calc(100% - 32px); transform: translateX(-50%)">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-sua" style="padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 16px">
+        <span class="lbl" id="dlg-sua" style="font-size: 20px; line-height: 26px; font-weight: 600">Sửa thiết bị</span>
+        <x-import component-from-global-scope="DeviceNet.Input" label="Tên" default-value="Ổ cắm máy giặt" style="width: 100%"></x-import>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Room</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <x-import component-from-global-scope="DeviceNet.Chip" selected="{{yes}}">Bếp</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Phòng khách</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Phòng ngủ</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip">Sân</x-import>
+            <x-import component-from-global-scope="DeviceNet.Chip" add="{{yes}}">Room mới</x-import>
+          </div>
+        </div>
+        <p class="cap">Icon và Thuộc tính chính trên tile: như SH-3.</p>
+        <div style="display: flex; gap: 8px; justify-content: flex-end">
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary">Hủy</x-import>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="primary">Lưu</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"dialog":{"editor":"boolean","default":false,"section":"Trạng thái"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, no: false, n1: 1, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      showDialog: !!this.props.dialog, led: ['Tắt', 'Bật', 'Đảo'] };
+  }
+}
+</script>
+</body>
+</html>

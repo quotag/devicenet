@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-00 Đăng nhập</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; align-items: center; padding: 0 16px; overflow: hidden">
+  <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%">
+    <div style="width: 72px; height: 72px; border-radius: 20px; background: var(--on-tint); color: var(--accent); display: flex; align-items: center; justify-content: center">
+      <svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"></path><path d="M6 18h.01"></path><path d="M10 18h.01"></path><path d="M15 10v4"></path><path d="M17.84 7.17a4 4 0 0 0-5.66 0"></path><path d="M20.66 4.34a8 8 0 0 0-11.31 0"></path></svg>
+    </div>
+    <h1 style="margin: 0; font-size: 32px; line-height: 38px; font-weight: 600">DeviceNet</h1>
+    <p class="body-t" style="color: var(--text-muted); text-align: center">Nhà của bạn, chạy tại nhà bạn</p>
+  </div>
+  <div style="width: 100%; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px; align-items: center">
+    <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" loading="{{loading}}" style="width: 100%">Tiếp tục với Google</x-import>
+    <p class="cap" style="text-align: center; max-width: 300px">Bằng việc tiếp tục, bạn đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách riêng tư</a>.</p>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"loading":{"editor":"boolean","default":false,"section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, theme: this.props.dark ? 'dn-dark' : 'dn-light', loading: !!this.props.loading };
+  }
+}
+</script>
+</body>
+</html>

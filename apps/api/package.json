@@ -1,0 +1,32 @@
+{
+  "name": "@devicenet/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "test:emu": "firebase emulators:exec --only auth,firestore --project demo-devicenet \"vitest run --config vitest.emu.config.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@devicenet/shared": "workspace:*",
+    "@fastify/cors": "^10.1.0",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "fastify": "^5.0.0",
+    "firebase-admin": "^12.0.0",
+    "libsodium-wrappers": "^0.7.0",
+    "ulid": "^2.3.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.0",
+    "@types/node": "^22.0.0",
+    "firebase": "^10.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

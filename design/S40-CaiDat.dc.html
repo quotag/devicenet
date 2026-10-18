@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-40 Cài đặt</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <a class="ibtn" href="S03-Me.dc.html" aria-label="Quay lại Me"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></a>
+      <h1 class="title">Cài đặt</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <div class="body" style="padding-bottom: 24px">
+    <p class="sect-h" style="margin-top: 16px">Hiển thị</p>
+    <div class="list">
+      <div class="row"><span class="row-main"><span class="lbl">Ngôn ngữ</span></span><span class="cap">Tiếng Việt</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M9 18l6-6-6-6"></path></svg></div>
+      <div class="row"><span class="row-main"><span class="lbl">Đơn vị nhiệt độ</span></span><x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{units}}" value="{{n0}}" style="width: 120px"></x-import></div>
+      <div class="row"><span class="row-main"><span class="lbl">Giao diện</span></span><x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{themes}}" value="{{n2}}" style="width: 200px"></x-import></div>
+    </div>
+
+    <p class="sect-h">Kết nối</p>
+    <div class="list">
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--lan)"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><circle cx="12" cy="20" r="1"></circle></svg>
+        <span class="row-main"><span class="lbl">Chế độ LAN</span><span class="cap">Điều khiển trực tiếp qua hub khi cùng mạng Wi‑Fi, không cần internet. Mở trong tab mới.</span></span>
+      </div>
+      <div class="row">
+        <span class="row-main"><span class="lbl dn-num">http://192.168.1.20:8080</span><span class="cap">Hub Nhà · địa chỉ lần cuối hub báo</span></span>
+        <x-import component-from-global-scope="DeviceNet.Button" variant="secondary">Mở</x-import>
+      </div>
+    </div>
+
+    <p class="sect-h">Thông báo</p>
+    <div class="list" style="opacity: .6">
+      <div class="row"><span class="row-main"><span class="lbl">Thông báo đẩy</span><span class="cap">Phase 2</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="neutral" plain="{{yes}}">Sắp có</x-import></div>
+    </div>
+
+    <p class="sect-h">Tài khoản</p>
+    <div class="list">
+      <div class="row"><span class="row-main"><span class="lbl">Thắng</span><span class="cap">[EMAIL@GMAIL.COM] · Google</span></span></div>
+      <div class="row" style="color: var(--accent)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg><span class="lbl">Đăng xuất</span></div>
+    </div>
+
+    <p class="sect-h">Về app</p>
+    <div class="list">
+      <div class="kv"><span class="cap">Phiên bản</span><span class="lbl dn-num">DeviceNet 0.1.0 (PWA)</span></div>
+      <div class="kv"><span class="cap">Mã nguồn</span><a class="lbl" href="#" style="text-decoration: none">github.com/[ORG]/devicenet</a></div>
+      <div class="kv"><span class="cap">Hub agent</span><span class="lbl dn-num">v1.2.0 · Zigbee2MQTT 2.1.3</span></div>
+    </div>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, no: false, n0: 0, n2: 2, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      units: ['°C', '°F'], themes: ['Sáng', 'Tối', 'Hệ thống'] };
+  }
+}
+</script>
+</body>
+</html>

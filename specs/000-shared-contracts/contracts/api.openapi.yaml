@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: DeviceNet Cloud API (Cloud Run / Fastify)
+  version: 1.0.0
+  description: |
+    The cloud API does ONLY what needs a server secret: tenant bootstrap, hub claim, MQTT credential
+    issuance, EMQX auth/authz hooks, EMQX webhook mirror. No device control, no state, no rule logic.
+
+    Auth schemes:
+      - `firebase`: `Authorization: Bearer <Firebase ID token>`; server verifies and reads custom claim `tenant`.
+      - `hubSecret`: `Authorization: Hub <hubId>:<secret>` (hub-agent after claim).
+      - `emqxShared`: `X-EMQX-Token: <shared secret>` for EMQX → API hooks (Secret Manager).
+    All error bodies: `{ "error": { "code": string, "message": string } }`. All timestamps epoch ms.
+servers:
+  - url: https://api-<hash>-as.a.run.app
+tags: [tenants, hubs, emqx]
+
+paths:
+  /v1/tenants/bootstrap:
+    post:
+      tags: [tenants]
+      summary: First login — create tenant, default site "Nhà", owner member; set custom claims on the user.
+      description: |
+        Idempotent: if the uid already belongs to a tenant, returns it.
+        Sets Firebase custom claims `{ tenant: <tenantId>, acl: { pub: [...], sub: [...] } }` (see spec 001 §EMQX).
+        Client MUST call `getIdToken(true)` after success to pick up claims.
+      security: [{ firebase: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timezone: { type: string, example: Asia/Ho_Chi_Minh }
+                lat: { type: number }
+                lng: { type: number }
+      responses:
+        "200":
+          description: Tenant ready
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tenantId, siteId, created]
+                properties:
+                  tenantId: { type: string }
+                  siteId: { type: string }
+                  created: { type: boolean }
+  /v1/tenants/me:
+    delete:
+      tags: [tenants]
+      summary: Delete account + tenant (S-40 "Xóa tài khoản"). v1 = HIDDEN in UI; endpoint reserved.
+      security: [{ firebase: [] }]
+      responses: { "202": { description: Deletion scheduled } }
+
+  /v1/hubs/claim-codes:
+    post:
+      tags: [hubs]
+      summary: Hub (unclaimed) requests a claim code.
+      description: Rate limited by IP (10/h). Code is 8 chars base32 (no 0/O/1/I), valid 15 minutes, single use.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hubPubKey, agentVersion, platform]
+              properties:
+                hubPubKey: { type: string, description: base64 public key used to encrypt the credential }
+                agentVersion: { type: string }
+                platform: { type: string, enum: [windows, linux] }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, expiresAt, pollEverySec]
+                properties:
+                  code: { type: string, pattern: "^[A-HJ-NP-Z2-9]{8}$" }
+                  expiresAt: { type: integer }
+                  pollEverySec: { type: integer, example: 3 }
+  /v1/hubs/claim-codes/{code}/credential:
+    get:
+      tags: [hubs]
+      summary: Hub polls for its credential after the user claims.
+      description: |
+        Returns 404 until claimed, 410 when expired/consumed. On 200 the server deletes the stored blob
+        (single read). Hub decrypts with its private key.
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [credential]
+                properties:
+                  credential:
+                    type: string
+                    description: |
+                      base64 ciphertext of JSON: { tenantId, hubId, siteId, mqtt: { host, port, wssPort, username: "hub:<hubId>", password },
+                      firebaseCustomToken, apiBaseUrl }
+        "404": { description: Not claimed yet }
+        "410": { description: Expired or already consumed }
+  /v1/hubs/claim:
+    post:
+      tags: [hubs]
+      summary: App claims a hub with the code shown by the hub (S-10 step 2).
+      security: [{ firebase: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, siteId, name]
+              properties:
+                code: { type: string }
+                siteId: { type: string }
+                name: { type: string, maxLength: 60 }
+      responses:
+        "200":
+          description: Hub created under caller's tenant; credential staged for the hub.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hubId]
+                properties: { hubId: { type: string } }
+        "400": { description: "code: INVALID_CODE (format) / EXPIRED / ALREADY_USED" }
+        "409": { description: "code: HUB_BELONGS_TO_OTHER_TENANT" }
+  /v1/hubs/{hubId}:
+    delete:
+      tags: [hubs]
+      summary: Remove hub — revoke MQTT secret, kick EMQX session, mark devices removed, rules broken.
+      security: [{ firebase: [] }]
+      parameters: [{ name: hubId, in: path, required: true, schema: { type: string } }]
+      responses: { "204": { description: Removed } }
+  /v1/hubs/{hubId}/token:
+    post:
+      tags: [hubs]
+      summary: Hub refreshes its Firebase custom token (hourly) using its MQTT secret.
+      security: [{ hubSecret: [] }]
+      parameters: [{ name: hubId, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { type: object, required: [firebaseCustomToken], properties: { firebaseCustomToken: { type: string } } }
+
+  /v1/emqx/auth:
+    post:
+      tags: [emqx]
+      summary: EMQX HTTP authentication for hubs (username "hub:<hubId>").
+      security: [{ emqxShared: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { username: { type: string }, password: { type: string }, clientid: { type: string } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result: { type: string, enum: [allow, deny] }
+                  is_superuser: { type: boolean, default: false }
+  /v1/emqx/acl:
+    post:
+      tags: [emqx]
+      summary: EMQX HTTP authorization for hubs only (apps are authorized by JWT `acl` claim).
+      security: [{ emqxShared: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                topic: { type: string }
+                action: { type: string, enum: [publish, subscribe] }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { type: object, properties: { result: { type: string, enum: [allow, deny] } } }
+  /v1/emqx/webhook:
+    post:
+      tags: [emqx]
+      summary: EMQX Rule Engine webhook — mirrors `status` and `events` into Firestore.
+      description: |
+        EMQX rule SQL: `SELECT topic, payload, publish_received_at FROM "t/+/h/+/status", "t/+/h/+/events"`.
+        API parses topic → tenantId/hubId, validates payload with mqtt.ts, writes:
+          status → tenants/{t}/hubs/{h} { online, lastSeen, agentVersion, z2mVersion, lanUrl, ip, deviceCount }
+          events → nothing in v1 (hub uploads events itself); Phase 2: FCM fan-out for type "notify".
+        Idempotent on (hubId, seq).
+      security: [{ emqxShared: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, payload]
+              properties:
+                topic: { type: string }
+                payload: { type: string, description: raw JSON string }
+                publish_received_at: { type: integer }
+      responses: { "204": { description: ok } }
+
+components:
+  securitySchemes:
+    firebase: { type: http, scheme: bearer, bearerFormat: Firebase ID token }
+    hubSecret: { type: http, scheme: Hub }
+    emqxShared: { type: apiKey, in: header, name: X-EMQX-Token }

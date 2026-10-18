@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-03 Chi tiết hub</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <a class="ibtn" href="S03-Me.dc.html" aria-label="Quay lại Me"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></a>
+      <h1 class="title" style="font-size: 17px">Hub Nhà</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <sc-if value="{{offline}}" hint-placeholder-val="{{no}}">
+    <x-import component-from-global-scope="DeviceNet.Banner" kind="offline" style="width: 100%">Hub Nhà đang offline · lần cuối 12:40</x-import>
+  </sc-if>
+  <div class="body" style="gap: 20px; padding: 24px 16px 0">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <span style="width: 56px; height: 56px; border-radius: 16px; background: var(--on-tint); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 32px; height: 32px"><path d="M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"></path><path d="M6 18h.01"></path><path d="M10 18h.01"></path><path d="M15 10v4"></path><path d="M17.84 7.17a4 4 0 0 0-5.66 0"></path><path d="M20.66 4.34a8 8 0 0 0-11.31 0"></path></svg></span>
+      <div class="row-main">
+        <span style="display: flex; align-items: center; gap: 8px"><span class="dot" style="background: {{dot}}; width: 8px; height: 8px" aria-hidden="true"></span><span style="font-size: 24px; line-height: 28px; font-weight: 600">{{statusText}}</span></span>
+        <span class="cap dn-num">{{statusSub}}</span>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap" style="margin: 0 0 8px">Thông tin</p>
+      <div class="list" style="margin: 0">
+        <div class="kv"><span class="cap">Tên</span><span class="lbl">Hub Nhà</span></div>
+        <div class="kv"><span class="cap">Site</span><span class="lbl">Nhà</span></div>
+        <div class="kv"><span class="cap">Thiết bị</span><span class="lbl dn-num">6</span></div>
+        <div class="kv"><span class="cap">Automation · scene</span><span class="lbl dn-num">4 · 3</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap" style="margin: 0 0 8px">Kết nối</p>
+      <div class="list" style="margin: 0">
+        <div class="row">
+          <span class="row-main"><span class="lbl">Địa chỉ LAN</span><span class="cap dn-num">http://192.168.1.20:8080 · địa chỉ lần cuối hub báo</span></span>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary">Mở</x-import>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap" style="margin: 0 0 8px">Phiên bản</p>
+      <div class="list" style="margin: 0">
+        <div class="kv"><span class="cap">Hub agent</span><span class="lbl dn-num">v1.2.0</span></div>
+        <div class="kv"><span class="cap">Zigbee2MQTT</span><span class="lbl dn-num">2.1.3</span></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 32px">
+      <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" block="{{yes}}" style="width: 100%">Đổi tên</x-import>
+      <x-import component-from-global-scope="DeviceNet.Button" variant="danger" block="{{yes}}" style="width: 100%">Gỡ hub</x-import>
+    </div>
+  </div>
+
+  <sc-if value="{{confirm}}" hint-placeholder-val="{{no}}">
+    <div class="scrim" aria-hidden="true"></div>
+    <div style="position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%)">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-hub" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; background: var(--danger-tint); border-color: var(--danger)">
+        <span class="lbl" id="dlg-hub" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Gỡ "Hub Nhà"?</span>
+        <p class="body-t">6 thiết bị của hub này sẽ bị gỡ khỏi tài khoản và 4 automation sẽ bị đánh dấu lỗi. Agent trên máy ngừng kết nối; muốn dùng lại phải nhập mã mới.</p>
+        <label style="display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer">
+          <input type="checkbox" style="width: 20px; height: 20px; margin: 0; accent-color: var(--accent)">
+          <span class="body-t">Tôi hiểu, thiết bị phải ghép nối lại từ đầu.</span>
+        </label>
+        <div style="display: flex; gap: 8px">
+          <x-import component-from-global-scope="DeviceNet.Button" variant="secondary" style="flex: 1">Giữ lại</x-import>
+          <x-import component-from-global-scope="DeviceNet.Button" variant="danger" disabled="{{yes}}" style="flex: 1">Gỡ hub</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"state":{"editor":"enum","options":["online","offline"],"default":"online","section":"Trạng thái"},"confirm":{"editor":"boolean","default":false,"section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var off = this.props.state === 'offline';
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      offline: off, confirm: !!this.props.confirm,
+      dot: off ? 'var(--danger)' : 'var(--success)',
+      statusText: off ? 'Offline' : 'Online',
+      statusSub: off ? 'lần cuối 12:40' : 'cập nhật 8 giây trước' };
+  }
+}
+</script>
+</body>
+</html>

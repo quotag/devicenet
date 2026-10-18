@@ -1,0 +1,26 @@
+<!-- Installed next to DeviceNetHub.exe (winsw renamed). %BASE% = install dir. -->
+<service>
+  <id>DeviceNetHub</id>
+  <name>DeviceNet Hub</name>
+  <description>DeviceNet hub-agent (supervises Mosquitto + Zigbee2MQTT, LAN API, cloud bridge)</description>
+  <executable>%BASE%\devicenet-agent.exe</executable>
+  <workingdirectory>%BASE%</workingdirectory>
+  <env name="DN_TOOLS_DIR" value="%BASE%\.tools"/>
+  <env name="DN_DATA_DIR" value="%ProgramData%\DeviceNet\data"/>
+  <env name="DN_NODE_PATH" value="%BASE%
+ode
+ode.exe"/>
+  <env name="DN_NODE_EXE" value="%BASE%\node\node.exe"/>
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>true</delayedAutoStart>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="20 sec"/>
+  <onfailure action="restart" delay="60 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <stoptimeout>15 sec</stoptimeout>
+  <log mode="roll-by-size">
+    <sizeThreshold>5120</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+  <logpath>%ProgramData%\DeviceNet\winsw-logs</logpath>
+</service>

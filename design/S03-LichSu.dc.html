@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-03 Lịch sử 7 ngày</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <a class="ibtn" href="S03-Me.dc.html" aria-label="Quay lại Me"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></a>
+      <h1 class="title" style="font-size: 17px">Lịch sử</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <div class="body">
+    <div style="display: flex; gap: 8px; padding: 12px 16px 0">
+      <x-import component-from-global-scope="DeviceNet.Chip" selected="{{allOn}}">Tất cả</x-import>
+      <x-import component-from-global-scope="DeviceNet.Chip" selected="{{errOn}}">Chỉ lỗi</x-import>
+    </div>
+
+    <sc-if value="{{hasData}}" hint-placeholder-val="{{yes}}">
+      <p class="sect-h">Hôm nay</p>
+      <div class="list">
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">07:02</span><span class="row-main"><span class="lbl">Máy giặt xong</span><span class="cap">Automation</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import></div>
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">06:30</span><span class="row-main"><span class="lbl">Tắt quạt</span><span class="cap">Automation</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import></div>
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">06:15</span><span class="row-main"><span class="lbl">Sáng dậy</span><span class="cap">Scene · chạy tay</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import></div>
+      </div>
+      <p class="sect-h">Hôm qua</p>
+      <div class="list">
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">19:40</span><span class="row-main"><span class="lbl">Máy giặt xong</span><span class="cap">Thông báo đã gửi</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import></div>
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">18:05</span><span class="row-main"><span class="lbl">Bật đèn sân</span><span class="cap">Lỗi: thiết bị offline</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="error">Lỗi</x-import></div>
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">18:05</span><span class="row-main"><span class="lbl">Bật đèn sân khi mặt trời lặn</span><span class="cap">Automation hỏng: Thiết bị không còn: Đèn sân</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="error">Lỗi</x-import></div>
+      </div>
+      <p class="sect-h">Thứ 4, 14/10</p>
+      <div class="list">
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">22:58</span><span class="row-main"><span class="lbl">Đi ngủ</span><span class="cap">Scene · 2 / 3 hành động</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="error">Lỗi</x-import></div>
+        <div class="row" style="min-height: 40px"><span class="cap dn-num" style="width: 44px">08:15</span><span class="row-main"><span class="lbl">Máy giặt xong</span><span class="cap">Automation</span></span><x-import component-from-global-scope="DeviceNet.Badge" tone="ok">OK</x-import></div>
+      </div>
+      <p class="cap" style="text-align: center; padding: 16px">Hiện 7 ngày gần nhất</p>
+    </sc-if>
+
+    <sc-if value="{{empty}}" hint-placeholder-val="{{no}}">
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 32px; text-align: center">
+        <svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+        <span class="lbl">Chưa có gì trong 7 ngày qua</span>
+        <p class="cap">Lần chạy của scene, automation và thông báo sẽ hiện ở đây.</p>
+      </div>
+    </sc-if>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"state":{"editor":"enum","options":["data","empty"],"default":"data","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var e = this.props.state === 'empty';
+    return { yes: true, no: false, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      hasData: !e, empty: e, allOn: true, errOn: false };
+  }
+}
+</script>
+</body>
+</html>

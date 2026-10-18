@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  emqx:
+    image: emqx:5.8-alpine
+    container_name: devicenet-emqx
+    hostname: emqx
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+      - "8084:8084"
+      - "18083:18083"
+    environment:
+      EMQX_NAME: emqx
+      EMQX_HOST: 0.0.0.0
+      EMQX_LOADED_PLUGINS: "emqx_auth_jwt,emqx_auth_http,emqx_rule_engine,emqx_web_hook"
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID}"
+      API_HOST: "${API_HOST}"
+      API_PORT: "${API_PORT}"
+      EMQX_SHARED_TOKEN: "${EMQX_SHARED_TOKEN}"
+    volumes:
+      - ./cluster.hocon:/opt/emqx/etc/cluster.hocon
+      - ./certs:/etc/certs:ro
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+    networks:
+      - devicenet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "emqx_ctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:latest
+    container_name: devicenet-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CADDY_EMAIL: "${CADDY_EMAIL:-admin@example.com}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - devicenet
+    restart: unless-stopped
+    depends_on:
+      - emqx
+
+volumes:
+  emqx_data:
+  emqx_log:
+  caddy_data:
+  caddy_config:
+
+networks:
+  devicenet:
+    driver: bridge

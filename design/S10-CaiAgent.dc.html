@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-10 Thêm hub · Cài agent</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="ibtn" type="button" aria-label="Quay lại"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></button>
+      <h1 class="title">Thêm hub</h1>
+    </div>
+    <div class="hdr-r"></div>
+  </header>
+  <div class="body" style="gap: 20px; padding: 16px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.Stepper" steps="{{steps}}" current="{{n0}}" style="width: 100%"></x-import>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h2 class="title" style="font-size: 20px">Cài agent lên máy có dongle Zigbee</h2>
+      <p class="body-t" style="color: var(--text-muted)">Agent chạy Zigbee2MQTT và nối hub của bạn với DeviceNet.</p>
+    </div>
+    <x-import component-from-global-scope="DeviceNet.SegmentedTabs" items="{{osTabs}}" value="{{n0}}" style="width: 100%"></x-import>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div class="code-box" style="position: relative; padding-right: 48px">irm https://[YOUR-DOMAIN]/agent/install.ps1 | iex<button class="ibtn" type="button" aria-label="Sao chép lệnh" style="position: absolute; right: 2px; top: 2px; width: 40px; height: 40px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div>
+      <p class="cap">Chạy trong PowerShell với quyền Administrator. Cắm dongle Sonoff ZBDongle-E trước khi chạy.</p>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 8px">
+      <span class="lbl">Sau khi cài xong</span>
+      <p class="body-t">Agent in ra mã 8 ký tự ở màn hình và tại trang <span class="dn-num">http://&lt;ip&gt;:8080/setup</span>. Bạn sẽ nhập mã đó ở bước sau.</p>
+    </div>
+  </div>
+  <div style="padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 8px">
+    <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" style="width: 100%">Tôi đã cài</x-import>
+    <x-import component-from-global-scope="DeviceNet.Button" variant="ghost" block="{{yes}}" style="width: 100%">Xem hướng dẫn chi tiết</x-import>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, n0: 0, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      steps: ['Cài agent', 'Nhập mã', 'Kết nối'], osTabs: ['Windows', 'Linux'] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>S-11 Thêm thiết bị · Hết giờ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devicenet/components/bundle.css">
+<link rel="stylesheet" href="dn.css">
+<script src="ds/devicenet/components/bundle.js"></script>
+<script src="dn-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#2f6bff}a:hover{color:#1f4fd0}
+</style>
+</helmet>
+<div class="ph {{theme}}" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden">
+  <header class="hdr">
+    <div class="hdr-l">
+      <button class="ibtn" type="button" aria-label="Quay lại"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></button>
+      <h1 class="title">Thêm thiết bị</h1>
+    </div>
+    <div class="hdr-r"><button class="txtbtn" type="button">Hủy</button></div>
+  </header>
+  <sc-if value="{{hubOffline}}" hint-placeholder-val="{{no}}">
+    <x-import component-from-global-scope="DeviceNet.Banner" kind="offline" action="Xem hub" style="width: 100%">Hub Nhà đang offline · không thể tìm thiết bị</x-import>
+  </sc-if>
+  <div class="body" style="gap: 16px; padding: 16px 16px 0">
+    <x-import component-from-global-scope="DeviceNet.Stepper" steps="{{steps}}" current="{{n1}}" style="width: 100%"></x-import>
+    <sc-if value="{{expired}}" hint-placeholder-val="{{yes}}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0">
+        <div style="position: relative; width: 140px; height: 140px" aria-hidden="true">
+          <svg viewBox="0 0 140 140" width="140" height="140" style="transform: rotate(-90deg)">
+            <circle cx="70" cy="70" r="64" fill="none" stroke="var(--surface-2)" stroke-width="8"></circle>
+          </svg>
+          <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+            <span class="dn-num" style="font-size: 32px; line-height: 38px; font-weight: 600; color: var(--text-muted)">0</span>
+            <span class="cap">giây</span>
+          </div>
+        </div>
+        <span class="lbl" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal; text-align: center">Chưa thấy thiết bị nào</span>
+        <p class="body-t" style="text-align: center; color: var(--text-muted); max-width: 320px">Hub đã mở ghép nối 120 giây mà không có thiết bị nào xin vào mạng.</p>
+      </div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lbl">Mẹo reset thiết bị</span>
+        <ul class="body-t" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px">
+          <li>Ổ cắm / công tắc: giữ nút 5–10 giây đến khi đèn nháy nhanh.</li>
+          <li>Cảm biến pin: tháo pin 10 giây, lắp lại rồi giữ nút reset.</li>
+          <li>Đặt thiết bị cách hub dưới 3 m khi ghép lần đầu.</li>
+        </ul>
+      </div>
+    </sc-if>
+    <sc-if value="{{hubOffline}}" hint-placeholder-val="{{no}}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 0; text-align: center">
+        <div style="width: 72px; height: 72px; border-radius: 999px; background: var(--warning-tint); color: var(--warning); display: flex; align-items: center; justify-content: center"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"></path><path d="M6 18h.01"></path><path d="M10 18h.01"></path><path d="M2 2l20 20"></path></svg></div>
+        <span class="lbl" style="font-size: 20px; line-height: 26px; font-weight: 600; white-space: normal">Hub đang offline</span>
+        <p class="body-t" style="color: var(--text-muted); max-width: 320px">Cần hub online để mở ghép nối. Kiểm tra máy chạy agent và mạng, rồi quay lại.</p>
+      </div>
+    </sc-if>
+  </div>
+  <div style="padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 8px">
+    <sc-if value="{{expired}}" hint-placeholder-val="{{yes}}">
+      <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" style="width: 100%">Tìm lại</x-import>
+    </sc-if>
+    <sc-if value="{{hubOffline}}" hint-placeholder-val="{{no}}">
+      <x-import component-from-global-scope="DeviceNet.Button" variant="primary" block="{{yes}}" style="width: 100%">Đến mục Hub trong Me</x-import>
+    </sc-if>
+  </div>
+  <div class="home" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Giao diện"},"state":{"editor":"enum","options":["expired","hubOffline"],"default":"expired","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var s = this.props.state || 'expired';
+    return { yes: true, no: false, n1: 1, theme: this.props.dark ? 'dn-dark' : 'dn-light',
+      steps: ['Chọn hub', 'Tìm thiết bị', 'Đặt tên'], expired: s === 'expired', hubOffline: s === 'hubOffline' };
+  }
+}
+</script>
+</body>
+</html>

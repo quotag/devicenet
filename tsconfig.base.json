@@ -1,0 +1,20 @@
+{
+  // moduleResolution "Bundler" (+ module ESNext): the shared contracts use extensionless relative
+  // imports ("./ids"), which NodeNext rejects. Vite resolves natively; Node apps consume
+  // @devicenet/shared via its bundled dist (tsup), so Node never sees extensionless imports.
+  // Node apps that run TS directly should use tsx/vitest, or bundle.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true
+  }
+}

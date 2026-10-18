@@ -1,0 +1,11 @@
+{
+  "state": "ON",
+  "power": 12.4,
+  "voltage": 231,
+  "current": 0.08,
+  "energy": 3.2,
+  "power_on_behavior": "previous",
+  "indicator_mode": "off/on",
+  "child_lock": "UNLOCK",
+  "linkquality": 120
+}

@@ -1,0 +1,21 @@
+# Caddy configuration for DeviceNet
+# Uses sslip.io for automatic DNS + TLS
+# Replace {IP} with the actual VM external IP
+
+{IP}.sslip.io {
+  tls internal
+  encode gzip
+
+  # Reverse proxy for EMQX dashboard (if needed)
+  handle /api/v5/* {
+    reverse_proxy emqx:18083
+  }
+
+  # Health check endpoint
+  handle /health {
+    respond "OK" 200
+  }
+
+  # Default response
+  respond 404
+}
