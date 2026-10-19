@@ -11,9 +11,14 @@ export function LoginScreen() {
     setLoading(true);
     try {
       await signIn();
-    } catch (e) {
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        return;
+      }
       console.warn("[auth] sign-in failed", e);
-      toastStore.getState().show({ kind: "error", text: vi.s00.error });
+      const text = code ? `${vi.s00.error} (${code})` : vi.s00.error;
+      toastStore.getState().show({ kind: "error", text });
     } finally {
       setLoading(false);
     }

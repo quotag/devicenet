@@ -24,10 +24,14 @@ beforeEach(() => resetAll());
 
 describe("applyAuthUser", () => {
   it("bootstraps once when tenant claim is missing, then refreshes the token", async () => {
-    const bootstrap = vi.fn(async () => undefined);
+    let tokenDuringBootstrap: string | null = null;
+    const bootstrap = vi.fn(async () => {
+      tokenDuringBootstrap = sessionStore.getState().idToken;
+    });
     const u = user({ claimAfterRefresh: TENANT });
     await applyAuthUser(u, { bootstrap });
     expect(bootstrap).toHaveBeenCalledTimes(1);
+    expect(tokenDuringBootstrap).toBe("tok1");
     expect(u.refreshed).toBe(1);
     const s = sessionStore.getState();
     expect(s.status).toBe("ready");

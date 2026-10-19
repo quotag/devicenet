@@ -5,6 +5,7 @@ const raw = z.object({
   VITE_USE_EMULATOR: z.string().optional(),
   VITE_FIREBASE_PROJECT_ID: z.string().optional(),
   VITE_FIREBASE_API_KEY: z.string().optional(),
+  VITE_FIREBASE_AUTH_DOMAIN: z.string().optional(),
   VITE_AUTH_EMULATOR_URL: z.string().optional(),
   VITE_FIRESTORE_EMULATOR_HOST: z.string().optional(),
   VITE_API_URL: z.string().optional(),
@@ -16,6 +17,7 @@ export interface Env {
   useEmulator: boolean;
   firebaseProjectId?: string;
   firebaseApiKey?: string;
+  firebaseAuthDomain?: string;
   authEmulatorUrl?: string;
   firestoreEmulatorHost?: string;
   apiUrl?: string;
@@ -29,6 +31,7 @@ export function parseEnv(source: Record<string, unknown>): Env {
     useEmulator: e.VITE_USE_EMULATOR === "1",
     firebaseProjectId: e.VITE_FIREBASE_PROJECT_ID,
     firebaseApiKey: e.VITE_FIREBASE_API_KEY,
+    firebaseAuthDomain: e.VITE_FIREBASE_AUTH_DOMAIN,
     authEmulatorUrl: e.VITE_AUTH_EMULATOR_URL,
     firestoreEmulatorHost: e.VITE_FIRESTORE_EMULATOR_HOST,
     apiUrl: e.VITE_API_URL,

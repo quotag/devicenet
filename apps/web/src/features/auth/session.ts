@@ -17,13 +17,17 @@ export interface AuthUser {
 
 export interface SessionDeps {
   /** `POST /v1/tenants/bootstrap {timezone}`. */
-  bootstrap(timezone: string): Promise<void>;
+  bootstrap(timezone: string, idToken?: string): Promise<void>;
 }
 
 export const defaultDeps: SessionDeps = {
-  async bootstrap(timezone) {
+  async bootstrap(timezone, idToken) {
     const { getApi } = await import("@/lib/api");
-    const { error } = await getApi().POST("/v1/tenants/bootstrap", { body: { timezone } });
+    const headers = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
+    const { error } = await getApi().POST("/v1/tenants/bootstrap", {
+      body: { timezone },
+      headers,
+    });
     if (error) throw new Error("bootstrap failed");
   },
 };
@@ -47,20 +51,23 @@ export async function applyAuthUser(user: AuthUser | null, deps: SessionDeps = d
     return;
   }
   let token = await user.getIdToken();
+  s.setIdToken(token);
+  s.setUser({ uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoUrl });
   let tenant = await user.getTenantClaim();
   if (!tenant) {
-    s.setUser({ uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoUrl });
     s.setStatus("bootstrapping");
-    await deps.bootstrap(timezone());
+    await deps.bootstrap(timezone(), token);
     token = await user.getIdToken(true);
+    s.setIdToken(token);
     tenant = await user.getTenantClaim();
     if (!tenant) throw new Error("tenant claim missing after bootstrap");
   }
-  s.setUser({ uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoUrl });
   s.setTenantId(tenant as TenantId);
   s.setIdToken(token);
   s.setStatus("ready");
 }
+
+let authModule: typeof import("./firebaseAuth") | null = null;
 
 /** Cloud boot: subscribe to Firebase ID-token changes. Returns unsubscribe. */
 export async function startCloudSession(deps: SessionDeps = defaultDeps): Promise<() => void> {
@@ -68,9 +75,10 @@ export async function startCloudSession(deps: SessionDeps = defaultDeps): Promis
   if (import.meta.env.VITE_MODE === "lan") return () => undefined;
   const { setTokenGetter } = await import("@/lib/api");
   setTokenGetter(() => sessionStore.getState().idToken);
-  const { watchAuth } = await import("./firebaseAuth");
+  const mod = await import("./firebaseAuth");
+  authModule = mod;
   let seq = 0;
-  return watchAuth((u) => {
+  return mod.watchAuth((u) => {
     const mine = ++seq;
     applyAuthUser(u, deps).catch((e: unknown) => {
       console.error("[session] auth failed", e);
@@ -98,8 +106,9 @@ export async function startLanSession(fetchImpl: typeof fetch = (...a) => fetch(
 
 export async function signIn(): Promise<void> {
   if (import.meta.env.VITE_MODE === "lan") return;
-  const { signInWithGoogle } = await import("./firebaseAuth");
-  await signInWithGoogle();
+  const mod = authModule ?? (await import("./firebaseAuth"));
+  authModule = mod;
+  await mod.signInWithGoogle();
 }
 
 export interface SignOutDeps {

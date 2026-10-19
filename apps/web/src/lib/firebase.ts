@@ -14,7 +14,14 @@ let handles: FirebaseHandles | null = null;
 export function getFirebase(): FirebaseHandles {
   if (handles) return handles;
   const projectId = env.firebaseProjectId ?? "demo-devicenet";
-  const app = getApps()[0] ?? initializeApp({ projectId, apiKey: env.firebaseApiKey ?? "demo-key" });
+  const authDomain = env.firebaseAuthDomain ?? `${projectId}.firebaseapp.com`;
+  const app =
+    getApps()[0] ??
+    initializeApp({
+      projectId,
+      apiKey: env.firebaseApiKey ?? "demo-key",
+      authDomain,
+    });
   const auth = getAuth(app);
   if (env.useEmulator) {
     connectAuthEmulator(auth, env.authEmulatorUrl ?? "http://localhost:9099", { disableWarnings: true });

@@ -36,13 +36,25 @@ function isStandalone(): boolean {
   return nav.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches === true;
 }
 
-/** Popup normally; redirect for iOS standalone PWAs where popups are blocked. */
+/** Popup normally; fallback to redirect if popup is blocked or on iOS standalone PWAs. */
 export async function signInWithGoogle(): Promise<void> {
   const { auth } = getFirebase();
   const provider = new GoogleAuthProvider();
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (ios && isStandalone()) await signInWithRedirect(auth, provider);
-  else await signInWithPopup(auth, provider);
+  if (ios && isStandalone()) {
+    await signInWithRedirect(auth, provider);
+    return;
+  }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === "auth/popup-blocked") {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    throw err;
+  }
 }
 
 export async function firebaseSignOut(): Promise<void> {
