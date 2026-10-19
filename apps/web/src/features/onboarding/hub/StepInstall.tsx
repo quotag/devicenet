@@ -9,8 +9,16 @@ const t = vi.s10;
 export function StepInstall({ onNext }: { onNext: () => void }) {
   const [os, setOs] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  const baseUrl =
+    import.meta.env.VITE_AGENT_BASE_URL ||
+    (typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "https://[YOUR-DOMAIN]");
+  const commands = t.installCmd(baseUrl);
+
   const copy = () => {
-    void navigator.clipboard?.writeText(t.installCmd[os]!).then(
+    void navigator.clipboard?.writeText(commands[os]!).then(
       () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -28,7 +36,7 @@ export function StepInstall({ onNext }: { onNext: () => void }) {
         <SegmentedTabs items={[...t.osTabs]} value={os} onChange={setOs} />
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div className="code-box" style={{ position: "relative", paddingRight: 48 }}>
-            {t.installCmd[os]}
+            {commands[os]}
             <button
               type="button"
               className="ibtn"

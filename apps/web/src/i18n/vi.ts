@@ -78,7 +78,10 @@ export const vi = {
     osTabs: ["Windows", "Linux"],
     installTitle: "Cài agent lên máy có dongle Zigbee",
     installBody: "Agent chạy Zigbee2MQTT và nối hub của bạn với DeviceNet.",
-    installCmd: ["irm https://[YOUR-DOMAIN]/agent/install.ps1 | iex", "curl -fsSL https://[YOUR-DOMAIN]/agent/install.sh | sudo bash"],
+    installCmd: (baseUrl = "https://[YOUR-DOMAIN]") => [
+      `irm ${baseUrl}/agent/install.ps1 | iex`,
+      `curl -fsSL ${baseUrl}/agent/install.sh | sudo bash`,
+    ],
     installNote: [
       "Chạy trong PowerShell với quyền Administrator. Cắm dongle Sonoff ZBDongle-E trước khi chạy.",
       "Chạy trong terminal với quyền sudo. Cắm dongle Sonoff ZBDongle-E trước khi chạy.",

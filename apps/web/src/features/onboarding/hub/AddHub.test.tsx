@@ -45,7 +45,10 @@ describe("StepInstall", () => {
     const next = vi.fn();
     render(<StepInstall onNext={next} />);
     fireEvent.click(screen.getByRole("button", { name: "Sao chép lệnh" }));
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("install.ps1"));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`${window.location.origin}/agent/install.ps1`));
+    fireEvent.click(screen.getByText("Linux"));
+    fireEvent.click(screen.getByRole("button", { name: "Sao chép lệnh" }));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`${window.location.origin}/agent/install.sh`));
     fireEvent.click(screen.getByText("Tôi đã cài"));
     expect(next).toHaveBeenCalled();
   });
