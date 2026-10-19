@@ -17,7 +17,7 @@ import type {
 type SiteDoc = z.infer<typeof Site>;
 type RoomDoc = z.infer<typeof Room>;
 type HubDoc = z.infer<typeof Hub>;
-type EventDocT = z.infer<typeof EventDoc>;
+export type EventDocT = z.infer<typeof EventDoc>;
 
 export type CollectionName = "sites" | "rooms" | "hubs" | "devices" | "rules" | "scenes" | "layouts" | "events";
 
@@ -40,6 +40,7 @@ export interface ConfigState {
   setScenes(v: Record<string, Scene>): void;
   setLayouts(v: Record<SiteId, Layout>): void;
   setEvents(v: EventDocT[]): void;
+  addEvent(e: EventDocT): void;
   setLoaded(c: CollectionName, v?: boolean): void;
   setFromCache(v: boolean): void;
   reset(): void;
@@ -68,6 +69,10 @@ export const configStore = createStore<ConfigState>((set) => ({
   setScenes: (scenes) => set({ scenes }),
   setLayouts: (layouts) => set({ layouts }),
   setEvents: (events) => set({ events }),
+  addEvent: (e) =>
+    set((st) => ({
+      events: [e, ...st.events.filter((x) => x.id !== e.id)].sort((a, b) => b.ts - a.ts).slice(0, 50),
+    })),
   setLoaded: (c, v = true) => set((st) => ({ loaded: { ...st.loaded, [c]: v } })),
   setFromCache: (fromCache) => set({ fromCache }),
   reset: () => set(initial()),

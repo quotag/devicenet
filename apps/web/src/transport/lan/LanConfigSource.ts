@@ -57,7 +57,11 @@ export class LanConfigSource implements ConfigSource {
       const headers: Record<string, string> = {};
       if (this.etag) headers["If-None-Match"] = this.etag;
       const res = await this.fetchImpl(`${this.baseUrl}/api/config`, { headers });
-      if (res.status === 304) return this.markReady();
+      if (res.status === 304) {
+        this.markReady();
+        void this.pollEvents();
+        return;
+      }
       if (!res.ok) throw new Error(`GET /api/config ${res.status}`);
       this.etag = res.headers.get("ETag");
       this.apply((await res.json()) as LanConfig);

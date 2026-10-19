@@ -24,7 +24,7 @@ import {
   type TenantId,
 } from "@devicenet/shared";
 import type { ZodTypeAny } from "zod";
-import { configStore } from "@/stores/config";
+import { configStore, type EventDocT } from "@/stores/config";
 import { connectionStore } from "@/stores/connection";
 import { deviceStateStore } from "@/stores/deviceState";
 import { toastStore } from "@/stores/toast";
@@ -59,6 +59,31 @@ const schemas = {
 } satisfies Record<string, ZodTypeAny>;
 
 const decoder = new TextDecoder();
+
+const STRING_FIELDS = ["deviceId", "ruleId", "sceneId", "runId", "result", "title"] as const;
+
+function hubEventToDoc(e: HubEvent): EventDocT {
+  const { v: _v, seq: _seq, id, hubId, ts, type, ...rest } = e as unknown as Record<string, unknown> & {
+    id: string;
+    hubId: string;
+    ts: number;
+    type: string;
+  };
+  const top: Record<string, string> = {};
+  for (const k of STRING_FIELDS) if (typeof rest[k] === "string") top[k] = rest[k] as string;
+  const detail = Object.fromEntries(
+    Object.entries(rest).filter(([k, val]) => !(STRING_FIELDS as readonly string[]).includes(k) && val !== undefined),
+  );
+  return {
+    id,
+    hubId,
+    ts,
+    type,
+    ...top,
+    ...(Object.keys(detail).length ? { detail } : {}),
+    expireAt: ts + 30 * 86_400_000,
+  } as unknown as EventDocT;
+}
 
 export function createInbound(opts: InboundOptions): Inbound {
   const gate = opts.seqGate ?? new SeqGate();
@@ -148,6 +173,7 @@ export function createInbound(opts: InboundOptions): Inbound {
             toastStore.getState().show({ kind: "error", text: strings.toast.timeout(name) });
           }
         }
+        configStore.getState().addEvent(hubEventToDoc(e));
         opts.onEvent?.(e);
         return;
       }
