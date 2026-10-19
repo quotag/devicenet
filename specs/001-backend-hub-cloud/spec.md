@@ -135,7 +135,7 @@ Theo `api.openapi.yaml`. Bổ sung hành vi:
 ## 8. Edge cases phải có test
 - Dongle đổi cổng COM sau reboot → vẫn nhận (serial-by-id / VID:PID).
 - `set` tới device offline → `events set.rejected reason=device_offline` trong ≤ 1 s, không treo queue.
-- Hai `set` liên tiếp `state:true` rồi `false` trong 100 ms → thiết bị kết thúc `false`, app nhận hai `state` đúng thứ tự `seq`.
+- Hai `set` liên tiếp `state:true` rồi `false` trong 100 ms → thiết bị kết thúc `false`, app nhận trạng thái cuối `false` với `seq` tăng dần (coalescing 200 ms theo docs/realtime-and-events §2.5).
 - Rule `for=180`: giá trị dao động 4 W ↔ 6 W → không kích hoạt; ổn định < 5 W đủ 180 s → kích hoạt đúng một lần.
 - Hub reboot lúc 23:00:30 với rule schedule 23:00 → không chạy bù, ghi `hub.warning`.
 - Mã claim nhập sai 5 lần → vẫn 400 (không lock) nhưng rate limit theo uid.

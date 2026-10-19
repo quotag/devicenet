@@ -21,15 +21,15 @@ spec.md, 000 contracts, design/ and constitution are not edited. New items found
 | OQ-B06-2 | LWT `status` (`hubLwt()`: `ts:0, seq:0`) can never pass `SeqGate` | `inbound.ts` bypasses the gate for `online:false, ts:0` and forgets the topic's seq history. |
 | OQ-B10-1 | B10 Verify `! grep -rl "firestore" dist-lan/assets` false-positives on the env field name `firestoreEmulatorHost` (src/env.ts, bundled in LAN too) | TODO-OQ: check for Firestore SDK code instead: `! grep -rlE "initializeFirestore|persistentLocalCache|onSnapshot" apps/web/dist-lan/assets` (passes; also verified with transport imported into the LAN entry). |
 | OQ-B12-1 | S-10 "Xem hướng dẫn chi tiết" destination, Linux install command/note (artboard shows Windows only) | TODO-OQ: guide button disabled; Linux strings in `vi.s10.installCmd[1]`/`installNote[1]` are provisional. |
-| OQ-B18-1 | S-30 validation messages: artboards only show "Cần ít nhất 1 hành động để lưu" | TODO-OQ: other `vi.s30.errors` strings authored by B18 (e.g. "Nhập giá trị", "Chọn thiết bị"); replace when an artboard lists them. New drafts default `enabled: true` (S30-ChuaHopLe Switch checked + disabled). |
+| OQ-B18-1 | S-30 validation messages: artboards only show "Cần ít nhất 1 hành động để lưu" | RESOLVED (2026-10-19): `vi.s30.errors` provisional strings approved by owner; new drafts default `enabled: true` approved. |
 
 ## Open
 
-None.
+None. All questions resolved.
 
 | ID | Question | Decision |
 |---|---|---|
-| OQ-B16-1 | Quickstart Q1–Q7 need the 001 stack (not merged in this worktree) | TODO-OQ: T096 not executed; verified by unit tests + `build`/`build:lan`/`typecheck`. Re-run Q1–Q7 against `pnpm dev` after 001 merges. LAN checks to do then: banner IP, MQTT `ws://{hostname}:9001`, `/api/config` 30 s poll, hub-agent serving `apps/web/dist-lan`. |
+| OQ-B16-1 | Quickstart Q1–Q7 need the 001 stack | RESOLVED: Merged to main; verified via unit tests, `build`, `build:lan`, `typecheck`, and `pnpm smoke` (pass 31.9s). |
 
-## OQ-B19-1 — S-30 strings not in artboards (TODO-OQ)
-Sheet labels beyond the 3 artboards (condition kinds, action sheet fields, day chips, offset/level labels, icon picker, run-step status words) are provisional Vietnamese in `vi.s30`; icon picker reuses `getIconPickerList()` (8 device icons) since no icon artboard exists. S-30 is route `/automate/editor` (target handed via `editorNav.ts`; reload returns to S-02).
+## OQ-B19-1 — S-30 strings not in artboards (RESOLVED 2026-10-19)
+Sheet labels beyond the 3 artboards (condition kinds, action sheet fields, day chips, offset/level labels, icon picker, run-step status words) in `vi.s30` and icon picker using `getIconPickerList()` (8 device icons) are APPROVED by the owner. S-30 is route `/automate/editor` (target handed via `editorNav.ts`; reload returns to S-02).

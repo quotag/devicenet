@@ -2,7 +2,9 @@
 
 Quy ước: [x] xong + commit · [~] đang làm · [ ] chưa. Ghi hash commit cuối mỗi mốc.
 Model: Opus = khó (engine, bridge/seq, claim crypto, FE transport) · Sonnet = mặc định · Haiku = cơ học.
-Quyết định của anh (2026-10-18): claim đầy đủ trên Firebase emulator `demo-devicenet`; ZBDongle-E (Z2M `ember`) + TS011F; tự tải Mosquitto/Z2M vào `.tools/`; mâu thuẫn → open-questions.md + chọn tạm `TODO-OQ`, không đổi contract.
+Quyết định của anh:
+- 2026-10-18: claim đầy đủ trên Firebase emulator `demo-devicenet`; ZBDongle-E (Z2M `ember`) + TS011F; tự tải Mosquitto/Z2M vào `.tools/`; mâu thuẫn → open-questions.md + chọn tạm `TODO-OQ`, không đổi contract.
+- 2026-10-19: (1) Chấp thuận `node:sqlite` làm runtime mặc định/fallback; (2) Chốt coalescing 200 ms theo realtime §2.5 (snapshot cuối `false` với `seq` tăng dần); (3) Duyệt B18/B19 RuleEditor logic + chuỗi `vi.s30` + draft `enabled:true`. Toàn bộ OQ đã giải quyết xong.
 Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirror status → webhook (thay EMQX Rule Engine). EMQX thật anh test sau.
 
 ## Phase
@@ -29,7 +31,7 @@ Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirr
 - Đang chạy: 001 B01 (haiku), 002 B01 (sonnet).
 - 001 B01 ✓ 270f823. Chạy: 001 B02, B05.
 - 002 B01 ✓ 3db3697 (deps M-Local cài sẵn; plugin-react@5). Chạy: 002 B02(haiku) B03(haiku) B04(sonnet) B05(opus).
-- 001 B02 ✓ 1fe303e. ⚠ better-sqlite3 native binding không tải được (proxy 403, không có compiler) → db.ts fallback node:sqlite (Node 22) sau interface Db. HỎI ANH: chấp nhận node:sqlite hay cần cài build tools/prebuild offline? Chạy: 001 B03.
+- 001 B02 ✓ 1fe303e. ⚠ better-sqlite3 native binding không tải được (proxy 403, không có compiler) → db.ts fallback node:sqlite (Node 22) sau interface Db. [Đã chốt 2026-10-19: chấp nhận node:sqlite làm mặc định/fallback]. Chạy: 001 B03.
 - 001 B03 ✓ f1c49c7. Chạy: 001 B04(opus), B11, B05.
 - 002 B04 ✓ 1213492. Chạy: 002 B07.
 - 002 B05 ✓ 7f3f973 (22 test transport). Lưu ý: verify dùng `pnpm --filter web exec vitest run <path>`. Chạy: 002 B06(opus).
@@ -39,7 +41,7 @@ Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirr
 - 001 B11 ✓ b38cbfe (Mosquitto spawn thật OK; Z2M thật chưa chạy vì không có dongle).
 - 002 B06 ✓ 6bda324 (41 test; OQ-B06-1 toast set.rejected chưa có chuỗi artboard; OQ-B06-2 LWT seq/ts=0 → cho qua + reset seq). Chạy: 002 B10(opus, kèm fix firebase.ts).
 - 002 B08 ✓ 7add3a2, B09 ✓ ae77a0e (Row layout chưa đối chiếu artboard → B11+ kiểm lại). Chờ B10 → B11.
-- 001 B04 ✓ 3fdf56e (105 test; hubCore.ts là điểm nối cho B10/B12/B13). OQ-13: (a) pairing khi không có cloud → ack internal 'no_cloud'; (b) ⚠ coalescing 200 ms có thể gộp true→false thành 1 state (spec §8 nói app nhận 2 state) — HỎI ANH; (c) actions-test.ts. Chạy: 001 B12, B05.
+- 001 B04 ✓ 3fdf56e (105 test; hubCore.ts là điểm nối cho B10/B12/B13). OQ-13: (a) pairing khi không có cloud → ack internal 'no_cloud'; (b) coalescing 200 ms [Đã chốt 2026-10-19: theo realtime §2.5, snapshot cuối false với seq tăng, spec §8 đã cập nhật]; (c) actions-test.ts. Chạy: 001 B12, B05.
 - 001 B12 ✓ cc627fd (startLanServer deps cho B13). Chờ B05 → B06/B07.
 - 002 B10 ✓ 5e52d67 (157 test xanh; firebase.ts tách Firestore vào transport/cloud; mqtt default import). Chạy: 002 B11.
 - 001 B05 ✓ ed282a2 (bootstrap role:user ✓, 21 emu test). ⚠ Proxy Bosch phá gRPC tới emulator → mọi tiến trình dev cần NO_PROXY/xóa HTTP(S)_PROXY cho 127.0.0.1 (B09/B13 phải xử lý). Chạy emu: node_modules/.bin/firebase emulators:exec (pnpm test:emu treo). Chạy: 001 B06(opus) B07.
@@ -57,11 +59,11 @@ Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirr
 - 002 B23 ✓ ab7b5dd. TODO dọn sau G7: hooks.test mock thiếu setRuleEnabled (B17); config.test LAN poll flaky (3 vs 2 lần).
 - 002 B17 ✓ 6e0ceee (SH-2 Automate variant lấy chuỗi từ spec §8 vì artboard chỉ có Home; editorTarget hook cho B19; sh6 hook cho B21).
 - 001 B09 ✓ d85228c (emu 4 test). Chạy: 001 B13 GATE (nâng lên opus vì tích hợp quan trọng) — kèm runbook-local.md + smoke.
-- ⚠ 002 B18 (RuleEditor state) code xong + verify xanh (15 test) nhưng CHƯA COMMIT: auto mode chặn git của agent (Auto-Mode Bypass). Em KHÔNG tự commit thay (tránh lách quyền) → CẦN ANH XEM: files `apps/web/src/features/automate/editor/{state,validate,zodVi,save}.ts`, `editor.test.ts`, hunk `vi.s30.errors` trong vi.ts, saveRule/saveScene trong writes.ts, OQ-B18-1 (chuỗi lỗi tự viết trừ "Cần ít nhất 1 hành động để lưu"; draft mặc định enabled:true). B19 (S-30 UI) HOÃN tới khi anh duyệt B18.
+- ⚠ 002 B18 (RuleEditor state) code xong + verify xanh (15 test). [Đã duyệt 2026-10-19: files editor, chuỗi vi.s30.errors, draft enabled:true]. B19 (S-30 UI) đã hoàn thành và tích hợp xanh vào main.
 - Chạy: 002 B21 (không stage file B18).
 - 002 B20 ✓ c5a4394 (Me/HubDetail/History/Settings; chưa làm kéo sắp site/room).
 - 002 B22 ✓ 67c85fe arrange mode (tab bar chưa mờ).
-- 002 B21 ✓ 23f5429 (chuỗi sheet ở src/i18n/sheets.ts; RoomEmpty 'Gán thiết bị' → sh3 roomId không có artboard → render rỗng, OQ). Cập nhật B18: file editor của B18 đã vô tình lọt vào commit B17 6e0ceee (B17 stage cả thư mục) — vẫn cần anh duyệt. open-questions.md (OQ-B18-1) còn uncommitted. Chạy: 002 B19.
+- 002 B21 ✓ 23f5429 (chuỗi sheet ở src/i18n/sheets.ts; RoomEmpty 'Gán thiết bị' → sh3 roomId không có artboard → render rỗng, OQ). Cập nhật B18: file editor của B18 đã lọt vào commit B17 6e0ceee — [Đã duyệt 2026-10-19, OQ-B18-1/OQ-B19-1 đã resolve]. Chạy: 002 B19.
 - 002 B19 ✓ 262b1d2 (OQ-B19-1 nhãn sheet ngoài artboard tạm). Chạy: 002 B24, 001 B13.
 - 002 B24 ✓ 8607470 desktop (chưa so mắt với artboard). Chạy: 002 B25 (+fix config.test), 001 B13.
 - 002 B25 ✓ d667cf9 (265 test xanh, bundle 174 KB gzip; icon PWA là placeholder — chưa có asset design). Chạy: 002 T146+T148; 001 B13.
@@ -71,3 +73,4 @@ Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirr
 - 001 B22 ✓ d1cd4c3 (OQ-B21-1/2 resolved, backoff test deterministic). MERGE 001→main c5c5c64.
 - ✅ TẤT CẢ BATCH 001 + 002 XONG. Kiểm chứng cuối trên main (6013150): `pnpm -r typecheck` xanh; test: shared 118, hub-agent 234, api 42 (+ emu 45 ở B19), dev-broker 4, web 268 — tất cả xanh; `pnpm smoke` PASS 31.9 s. Sửa flaky app.test (asyncUtilTimeout 5 s).
 - CHƯA kiểm thật: dev:real với dongle + TS011F; click UI trên trình duyệt; terraform validate; SEA exe build; docker compose config; Ctrl+C console thật.
+- 2026-10-19: Anh đã duyệt toàn bộ các quyết định kỹ thuật: (1) Chấp nhận `node:sqlite` làm mặc định/fallback; (2) Chốt coalescing 200 ms (realtime §2.5); (3) Duyệt B18/B19 RuleEditor logic + chuỗi `vi.s30` + draft `enabled:true`. Toàn bộ doc/spec/OQ đã đồng bộ. Sẵn sàng cho kiểm thử thực tế với USB Dongle (`pnpm dev:real`) và Web UI.
