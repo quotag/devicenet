@@ -15,8 +15,9 @@ export function HistoryScreen({ now = Date.now }: { now?: () => number }) {
   const events = useStore(configStore, (s) => s.events);
   const rules = useStore(configStore, (s) => s.rules);
   const scenes = useStore(configStore, (s) => s.scenes);
+  const devices = useStore(configStore, (s) => s.devices);
   const [onlyErrors, setOnlyErrors] = useState(false);
-  const groups = groupByDay(events, now(), onlyErrors, { rules, scenes });
+  const groups = groupByDay(events, now(), onlyErrors, { rules, scenes, devices });
 
   return (
     <>

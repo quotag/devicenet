@@ -19,7 +19,16 @@ const m = vi.me;
 function HubRow({ hub, deviceCount, siteName }: { hub: HubDoc; deviceCount: number; siteName?: string }) {
   const navigate = useNavigate();
   const status = useHubStatus(hub.id);
-  const dot = status.online ? "var(--success)" : "var(--danger)";
+  const z2mOffline = status.online && status.z2m === "offline";
+  const z2mStarting = status.online && status.z2m === "starting";
+  const dot = !status.online ? "var(--danger)" : z2mOffline || z2mStarting ? "var(--warning)" : "var(--success)";
+  const statusText = !status.online
+    ? m.offlineSince(hhmm(status.lastSeen))
+    : z2mOffline
+    ? m.z2mOffline
+    : z2mStarting
+    ? m.z2mStarting
+    : m.online;
   return (
     <button
       type="button"
@@ -32,7 +41,7 @@ function HubRow({ hub, deviceCount, siteName }: { hub: HubDoc; deviceCount: numb
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="lbl">{hub.name}</span>
           <span className="dot" style={{ background: dot }} aria-hidden="true" />
-          <span className="cap">{status.online ? m.online : m.offlineSince(hhmm(status.lastSeen))}</span>
+          <span className="cap">{statusText}</span>
         </span>
         <span className="cap dn-num">
           {[status.agentVersion ? `v${status.agentVersion}` : null, m.devicesCount(deviceCount), siteName].filter(Boolean).join(" · ")}
@@ -123,7 +132,7 @@ export function MeScreen() {
   const title = user?.displayName || user?.email || (mode === "lan" ? m.lanAccount : "");
   const initial = (title[0] ?? "?").toUpperCase();
   const unnamed = Object.values(devices).filter((d) => d.status === "new").length;
-  const latest = events.slice(0, 5).map((e) => toView(e, { rules, scenes }));
+  const latest = events.slice(0, 5).map((e) => toView(e, { rules, scenes, devices }));
   const addHub = () => void navigate({ to: "/onboarding/hub" });
 
   return (

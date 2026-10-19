@@ -21,6 +21,8 @@ export const vi = {
 
   banner: {
     hubOffline: (hubName: string, lastSeen = "12:40") => `Hub ${hubName} đang offline · lần cuối ${lastSeen}`,
+    z2mOffline: (hubName?: string) =>
+      hubName ? `Mất kết nối Zigbee trên ${hubName} (kiểm tra USB)` : "Mất kết nối Zigbee (kiểm tra USB)",
     lanMode: (ip: string) => `Đang dùng chế độ LAN · ${ip}`,
     reconnecting: "Đang kết nối lại…",
     hubSyncing: "Đã lưu, hub đang nạp… (tối đa 5 giây)",
@@ -318,6 +320,8 @@ export const vi = {
     // hub detail
     hubOnline: "Online",
     hubOffline: "Offline",
+    z2mOffline: "Mất kết nối Zigbee (kiểm tra USB)",
+    z2mStarting: "Đang khởi động Zigbee...",
     updatedAgo: (t: string) => `cập nhật ${t}`,
     lastSeen: (t: string) => `lần cuối ${t}`,
     info: "Thông tin",
@@ -361,6 +365,13 @@ export const vi = {
     kindRule: "Automation",
     kindScene: "Scene · chạy tay",
     kindNotify: "Thông báo đã gửi",
+    deviceOnline: "Thiết bị trực tuyến",
+    deviceOffline: "Thiết bị mất kết nối",
+    deviceFound: "Đã ghép nối",
+    deviceRemoved: "Đã gỡ thiết bị",
+    configApplied: "Đồng bộ cấu hình",
+    configAppliedSub: "Đã áp dụng lên Hub",
+    device: "Thiết bị",
     kindBroken: (why?: string) => (why ? `Automation hỏng: ${why}` : "Automation hỏng"),
     sceneParts: (done: number, total: number) => `Scene · ${done} / ${total} hành động`,
     failed: (why?: string) => (why ? `Lỗi: ${why}` : "Lỗi"),

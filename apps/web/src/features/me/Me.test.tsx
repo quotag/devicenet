@@ -13,7 +13,7 @@ import { HistoryScreen } from "./HistoryScreen";
 import { HubDetailScreen } from "./HubDetailScreen";
 import { MeScreen } from "./MeScreen";
 import { SettingsScreen } from "./SettingsScreen";
-import { groupByDay } from "./history";
+import { groupByDay, toView } from "./history";
 
 type Ev = z.infer<typeof EventDoc>;
 const hubId = "hub_01HZZZZZZZZZZZZZZZZZZZZZZZ" as HubId;
@@ -95,6 +95,23 @@ describe("history grouping", () => {
     expect(errs[0]!.items[0]!.sub).toBe(vi.hist.failed("thiết bị offline"));
   });
 
+  it("resolves device name and formats device events properly", () => {
+    const devNames = { rules: {}, scenes: {}, devices: { dev_1: { name: "Đèn trần" } } };
+    const v1 = toView(ev(1, NOW, { type: "device.online", deviceId: "dev_1", title: undefined }), devNames);
+    expect(v1.title).toBe("Đèn trần");
+    expect(v1.sub).toBe(vi.hist.deviceOnline);
+    expect(v1.error).toBe(false);
+
+    const v2 = toView(ev(2, NOW, { type: "device.offline", deviceId: "dev_1", title: undefined }), devNames);
+    expect(v2.title).toBe("Đèn trần");
+    expect(v2.sub).toBe(vi.hist.deviceOffline);
+    expect(v2.error).toBe(true);
+
+    const v3 = toView(ev(3, NOW, { type: "device.found", deviceId: "dev_unknown", title: undefined, detail: { model: "SNZB-02" } }), devNames);
+    expect(v3.title).toBe("SNZB-02");
+    expect(v3.sub).toBe(vi.hist.deviceFound);
+  });
+
   it("HistoryScreen chips + empty state", async () => {
     configStore.getState().setEvents([ev(1, NOW - H), ev(2, NOW - H - 1000, { type: "rule.broken", detail: { reason: "Thiết bị không còn" } })]);
     mount(<HistoryScreen now={() => NOW} />);
@@ -108,6 +125,12 @@ describe("history grouping", () => {
 });
 
 describe("Me", () => {
+  it("shows Zigbee warning when z2m is offline", async () => {
+    mount(<MeScreen />, {
+      hubStatus: { [hubId]: { v: 1, ts: NOW, seq: 1, online: true, agentVersion: "1.2.0", z2m: "offline" } },
+    });
+    expect(await screen.findByText(vi.me.z2mOffline)).toBeInTheDocument();
+  });
   it("shows hub row, unnamed row, 5 latest events and history link", async () => {
     configStore.getState().setEvents([1, 2, 3, 4, 5, 6, 7].map((n) => ev(n, NOW - n * H)));
     mount(<MeScreen />, { devices: [dev("A"), dev("N", "new")] });

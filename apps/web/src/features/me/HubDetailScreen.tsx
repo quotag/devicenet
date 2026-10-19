@@ -74,6 +74,8 @@ export function HubDetailScreen({ hubId, removeHub = removeHubApi, now = Date.no
   if (!hub) return header(m.hub);
 
   const online = status.online;
+  const z2mOffline = online && status.z2m === "offline";
+  const z2mStarting = online && status.z2m === "starting";
   const lanUrl = status.lanUrl;
   const doRemove = async () => {
     if (!ack || busy) return;
@@ -105,7 +107,11 @@ export function HubDetailScreen({ hubId, removeHub = removeHubApi, now = Date.no
   return (
     <>
       {header(hub.name)}
-      {!online ? <Banner kind="offline">{vi.banner.hubOffline(hub.name, hhmm(status.lastSeen))}</Banner> : null}
+      {!online ? (
+        <Banner kind="offline">{vi.banner.hubOffline(hub.name, hhmm(status.lastSeen))}</Banner>
+      ) : z2mOffline ? (
+        <Banner kind="offline">{vi.banner.z2mOffline(hub.name)}</Banner>
+      ) : null}
       <div className="body" style={{ gap: 20, padding: "24px 16px 0", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <span
@@ -115,8 +121,18 @@ export function HubDetailScreen({ hubId, removeHub = removeHubApi, now = Date.no
           </span>
           <div className="row-main">
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="dot" style={{ background: online ? "var(--success)" : "var(--danger)", width: 8, height: 8 }} aria-hidden="true" />
-              <span style={{ fontSize: 24, lineHeight: "28px", fontWeight: 600 }}>{online ? m.hubOnline : m.hubOffline}</span>
+              <span
+                className="dot"
+                style={{
+                  background: !online ? "var(--danger)" : z2mOffline || z2mStarting ? "var(--warning)" : "var(--success)",
+                  width: 8,
+                  height: 8,
+                }}
+                aria-hidden="true"
+              />
+              <span style={{ fontSize: 24, lineHeight: "28px", fontWeight: 600 }}>
+                {!online ? m.hubOffline : z2mOffline ? m.z2mOffline : z2mStarting ? m.z2mStarting : m.hubOnline}
+              </span>
             </span>
             <span className="cap dn-num">
               {online ? m.updatedAgo(status.lastSeen ? relativeTime(status.lastSeen, now()) : "") : m.lastSeen(hhmm(status.lastSeen))}

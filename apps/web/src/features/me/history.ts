@@ -45,27 +45,61 @@ const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v 
 const num = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
 
 export function isErrorEvent(e: EventT): boolean {
-  if (e.type === "rule.broken") return true;
+  if (e.type === "rule.broken" || e.type === "device.offline" || e.type === "set.rejected") return true;
   const r = e.result?.toLowerCase();
   return r === "error" || r === "failed" || r === "fail" || r === "partial" || r === "broken";
 }
 
-/** Presentation of one event row; names fall back to rule/scene docs when `title` is absent. */
-export function toView(e: EventT, names: { rules: Record<string, { name: string }>; scenes: Record<string, { name: string }> }): EventView {
+export interface EntityNames {
+  rules: Record<string, { name: string }>;
+  scenes: Record<string, { name: string }>;
+  devices?: Record<string, { name: string }>;
+}
+
+/** Presentation of one event row; names fall back to rule/scene/device docs when `title` is absent. */
+export function toView(e: EventT, names: EntityNames): EventView {
   const h = vi.hist;
   const err = isErrorEvent(e);
-  const title =
-    e.title ?? (e.ruleId ? names.rules[e.ruleId]?.name : undefined) ?? (e.sceneId ? names.scenes[e.sceneId]?.name : undefined) ?? h.untitled;
+  const devName = e.deviceId ? names.devices?.[e.deviceId]?.name : undefined;
+  const ruleName = e.ruleId ? names.rules[e.ruleId]?.name : undefined;
+  const sceneName = e.sceneId ? names.scenes[e.sceneId]?.name : undefined;
+  let title = e.title ?? ruleName ?? sceneName ?? devName;
   const reason = str(e.detail?.reason) ?? str(e.detail?.error) ?? str(e.detail?.message);
   let sub: string;
-  if (e.type === "rule.broken") sub = h.kindBroken(reason);
-  else if (err) {
+
+  if (e.type === "rule.broken") {
+    sub = h.kindBroken(reason);
+  } else if (e.type === "device.online") {
+    title = title ?? h.device;
+    sub = h.deviceOnline;
+  } else if (e.type === "device.offline") {
+    title = title ?? h.device;
+    sub = h.deviceOffline;
+  } else if (e.type === "device.found") {
+    title = title ?? str(e.detail?.model) ?? h.device;
+    sub = h.deviceFound;
+  } else if (e.type === "device.removed") {
+    title = title ?? h.device;
+    sub = h.deviceRemoved;
+  } else if (e.type === "config.applied") {
+    title = title ?? h.configApplied;
+    sub = h.configAppliedSub;
+  } else if (e.type === "set.rejected") {
+    title = title ?? h.device;
+    sub = h.failed(reason);
+  } else if (err) {
     const done = num(e.detail?.done);
     const total = num(e.detail?.total);
     sub = e.type === "scene.run" && done !== undefined && total !== undefined ? h.sceneParts(done, total) : h.failed(reason);
-  } else if (e.type === "scene.run") sub = h.kindScene;
-  else if (e.type === "notify") sub = h.kindNotify;
-  else sub = h.kindRule;
+  } else if (e.type === "scene.run") {
+    sub = h.kindScene;
+  } else if (e.type === "notify") {
+    sub = h.kindNotify;
+  } else {
+    sub = h.kindRule;
+  }
+
+  title = title ?? h.untitled;
   return { id: e.id, ts: e.ts, time: hhmm(e.ts), title, sub, error: err };
 }
 

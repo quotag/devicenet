@@ -35,11 +35,13 @@ export function HomeScreen() {
   const canArrange = mode !== "lan" && devices.length > 0;
   const arranging = arrangingUi && canArrange;
 
-  // Priority: hub offline > LAN > reconnecting.
+  // Priority: hub offline > z2m offline > LAN > reconnecting.
   let banner: { mode: "offline" | "lan" | "reconnecting"; text: string; action?: string } | null = null;
   if (hub && !hubStatus.online) {
     const last = hubStatus.lastSeen ? hhmm(hubStatus.lastSeen, tz) : undefined;
     banner = { mode: "offline", text: vi.banner.hubOffline(hub.name, last), action: vi.home.viewHub };
+  } else if (hub && hubStatus.online && hubStatus.z2m === "offline") {
+    banner = { mode: "offline", text: vi.banner.z2mOffline(hub.name), action: vi.home.viewHub };
   } else if (mode === "lan") {
     const host = (hubStatus.lanUrl ?? globalThis.location?.hostname ?? "").replace(/^\w+:\/\//, "").replace(/\/.*$/, "");
     banner = { mode: "lan", text: vi.banner.lanMode(host) };
