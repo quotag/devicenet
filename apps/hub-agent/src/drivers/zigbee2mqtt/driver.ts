@@ -249,7 +249,20 @@ export class Zigbee2mqttDriver implements Driver {
   }
 
   async removeDevice(externalId: string, force: boolean): Promise<void> {
-    await this.request('device/remove', { id: this.fn(externalId), force });
+    const id = this.fn(externalId);
+    try {
+      await this.request('device/remove', { id, force });
+    } catch (e) {
+      if (id !== externalId) {
+        try {
+          await this.request('device/remove', { id: externalId, force });
+          return;
+        } catch {
+          // ignore fallback error, throw original
+        }
+      }
+      throw e;
+    }
   }
 
   /** Stores the user-visible name in the Z2M `description` option (OQ-1); friendly_name stays the `dev_…` id. */

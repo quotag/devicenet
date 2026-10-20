@@ -89,6 +89,15 @@ describe('device lifecycle (mock Z2M)', () => {
     expect(acks().at(-1)).toMatchObject({ ok: false, error: 'not_found' });
   });
 
+  it('device.remove succeeds even when device does not exist in Z2M (already left)', async () => {
+    const dev = await start();
+    s.mock.devices.delete(IEEE);
+    await s.core.handleMessage(cmdTopic, env({ type: 'device.remove', deviceId: dev.id, force: true }), 'cloud');
+    expect(acks().at(-1)).toMatchObject({ ok: true });
+    expect(s.core.registry.get(dev.id)).toBeUndefined();
+    expect(s.cfg.devices.get(dev.id)!.status).toBe('removed');
+  });
+
   it('startup recovery: Z2M device without registry entry → created with status new', async () => {
     s = await startStack({ withDevice: true, claimed: false });
     await until(() => s.driver.knownDevices().length > 0);

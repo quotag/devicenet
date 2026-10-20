@@ -62,7 +62,14 @@ export class DeviceLifecycle {
     const { registry, driver, publisher, events } = this.o;
     const entry = registry.get(deviceId);
     if (!entry) throw new Error('not_found');
-    await driver.removeDevice(entry.device.externalId, force);
+    try {
+      await driver.removeDevice(entry.device.externalId, force);
+    } catch (e) {
+      const msg = (e as Error)?.message ?? '';
+      const isAlreadyGone = /does not exist|not found|unknown/i.test(msg);
+      if (!force && !isAlreadyGone) throw e;
+      this.o.log?.warn?.({ deviceId, externalId: entry.device.externalId, err: msg }, 'Driver removeDevice failed or device already gone; proceeding with registry removal');
+    }
     const now = this.clock.now();
     const removedDoc = { ...entry.device, status: 'removed' as const, removedAt: now, updatedAt: now };
     registry.remove(deviceId, removedDoc);
