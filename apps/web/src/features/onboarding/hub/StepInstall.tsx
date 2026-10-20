@@ -53,7 +53,10 @@ export function StepInstall({ onNext }: { onNext: () => void }) {
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <span className="lbl">{t.afterInstallTitle}</span>
           <p className="body-t">
-            {t.afterInstallBody} <span className="dn-num">{t.setupUrl}</span>
+            {t.afterInstallBody}{" "}
+            <a href={t.setupUrl} target="_blank" rel="noreferrer" className="dn-num" style={{ textDecoration: "underline", color: "var(--accent)" }}>
+              {t.setupUrl}
+            </a>
             {t.afterInstallBody2}
           </p>
         </div>

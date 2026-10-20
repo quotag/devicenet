@@ -41,4 +41,8 @@ fi
 act install -m 0644 "$SRC/devicenet.service" /etc/systemd/system/devicenet.service
 act systemctl daemon-reload
 act systemctl enable --now devicenet.service
-echo "Done. Open http://<this-host>:8080/setup"
+echo "Done. Open http://localhost:8080/setup"
+LAN_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+if [ -n "$LAN_IP" ]; then
+  echo "Or from other devices on LAN: http://${LAN_IP}:8080/setup"
+fi

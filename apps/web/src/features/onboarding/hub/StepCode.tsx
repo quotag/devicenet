@@ -59,7 +59,11 @@ export function StepCode({ siteId, siteName, claim = claimHub, onClaimed }: Step
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h2 className="title" style={{ fontSize: 20 }}>{t.codeTitle}</h2>
           <p className="body-t" style={{ color: "var(--text-muted)" }}>
-            {t.codeBody} <span className="dn-num">{t.setupUrl}</span> {t.codeBody2}
+            {t.codeBody}{" "}
+            <a href={t.setupUrl} target="_blank" rel="noreferrer" className="dn-num" style={{ textDecoration: "underline", color: "var(--accent)" }}>
+              {t.setupUrl}
+            </a>{" "}
+            {t.codeBody2}
           </p>
         </div>
         <CodeInput value={code} onChange={edit} invalid={bad} disabled={m.isPending} autoFocus />
@@ -69,7 +73,11 @@ export function StepCode({ siteId, siteName, claim = claimHub, onClaimed }: Step
             <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <span className="lbl">{t.newCodeTitle}</span>
               <p className="body-t">
-                {t.newCodeBody} <span className="dn-num">{t.setupUrl}</span> {t.newCodeBody2}
+                {t.newCodeBody}{" "}
+                <a href={t.setupUrl} target="_blank" rel="noreferrer" className="dn-num" style={{ textDecoration: "underline", color: "var(--accent)" }}>
+                  {t.setupUrl}
+                </a>{" "}
+                {t.newCodeBody2}
               </p>
               <Button
                 variant="secondary"

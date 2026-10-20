@@ -157,10 +157,15 @@ describe("Stepper / TabBar", () => {
 
   it("TabBar highlights the current tab and shows red dots", () => {
     const onChange = vitest.fn();
-    render(<TabBar value="home" onChange={onChange} dots={{ me: true }} />);
+    render(<TabBar value="home" onChange={onChange} dots={{ me: true }} disabled={{ automate: true }} />);
     expect(screen.getByText("Home").closest("button")?.getAttribute("aria-current")).toBe("page");
     expect(screen.getByTestId("tab-dot-me")).toBeTruthy();
+    const automateBtn = screen.getByText("Automate").closest("button");
+    expect(automateBtn).toBeDisabled();
+    expect(automateBtn?.getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(screen.getByText("Automate"));
-    expect(onChange).toHaveBeenCalledWith("automate");
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Me"));
+    expect(onChange).toHaveBeenCalledWith("me");
   });
 });

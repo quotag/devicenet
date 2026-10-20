@@ -3,7 +3,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, House, Router, User, Zap } from "lucide-react";
 import { useStore } from "zustand";
 import { vi } from "@/i18n/vi";
-import { configStore, uiStore } from "@/stores";
+import { configStore, sessionStore, uiStore } from "@/stores";
 import { useDevices, useHub, useHubStatus } from "@/transport/hooks";
 import { SheetHost } from "./SheetHost";
 import { tabOf } from "./TabLayout";
@@ -32,6 +32,9 @@ export function DesktopShell({ children }: { children: ReactNode }) {
   const deviceCount = useDevices(site?.id, "all").length;
   const ruleBroken = useStore(configStore, (s) => Object.values(s.rules).some((r) => Boolean(r.brokenReason) || r.lastResult === "broken"));
   const hubOffline = useStore(configStore, (s) => Object.values(s.hubs).some((h) => !h.online));
+  const mode = useStore(sessionStore, (s) => s.mode);
+  const hasHub = Object.keys(useStore(configStore, (s) => s.hubs)).length > 0;
+  const isAddingHub = pathname.startsWith("/onboarding") || (mode === "cloud" && !hasHub);
   const current = tabOf(pathname);
   const wide = isWideRoute(pathname);
   const d = vi.desktop;
@@ -56,20 +59,26 @@ export function DesktopShell({ children }: { children: ReactNode }) {
           <ChevronDown className="ic" aria-hidden="true" />
         </button>
         <nav className="dside-nav" aria-label={vi.dn2.nav}>
-          {NAV.map(({ id, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className="dside-item"
-              aria-current={id === current ? "page" : undefined}
-              onClick={() => void navigate({ to: `/${id}` })}
-            >
-              <Icon className="ic" aria-hidden="true" />
-              {vi.dn2.tabs[id]}
-              {id === "automate" && ruleBroken ? <span className="dside-dot" role="img" aria-label={d.ruleBroken} data-testid="side-dot-automate" /> : null}
-              {id === "me" && hubOffline ? <span className="dside-dot" data-testid="side-dot-me" /> : null}
-            </button>
-          ))}
+          {NAV.map(({ id, icon: Icon }) => {
+            const isDisabled = id === "automate" && isAddingHub;
+            return (
+              <button
+                key={id}
+                type="button"
+                className="dside-item"
+                aria-current={id === current ? "page" : undefined}
+                aria-disabled={isDisabled ? "true" : undefined}
+                disabled={isDisabled}
+                title={isDisabled ? "Cần hoàn tất thêm hub trước khi dùng Automation" : undefined}
+                onClick={() => !isDisabled && void navigate({ to: `/${id}` })}
+              >
+                <Icon className="ic" aria-hidden="true" />
+                {vi.dn2.tabs[id]}
+                {id === "automate" && ruleBroken ? <span className="dside-dot" role="img" aria-label={d.ruleBroken} data-testid="side-dot-automate" /> : null}
+                {id === "me" && hubOffline ? <span className="dside-dot" data-testid="side-dot-me" /> : null}
+              </button>
+            );
+          })}
         </nav>
         {hub ? (
           <div className="dside-hub">

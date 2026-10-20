@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Sheet } from "@/components/dn/Sheet";
-import { resetAll, sessionStore } from "@/stores";
+import { configStore, resetAll, sessionStore } from "@/stores";
 import { AppRouter } from "./providers";
 
 function mockViewport(desktop: boolean) {
@@ -42,6 +42,17 @@ describe("desktop >= 900", () => {
     await screen.findByTestId("home-screen");
     expect(screen.queryByTestId("desktop-shell")).toBeNull();
     expect(screen.getByRole("navigation")).toBeInTheDocument();
+  });
+
+  it("disables automate tab when in onboarding", async () => {
+    mockViewport(true);
+    configStore.setState((s) => ({ ...s, loaded: { ...s.loaded, hubs: true } }));
+    sessionStore.setState({ mode: "cloud", status: "ready" });
+    render(<AppRouter initialPath="/onboarding/hub" />);
+    expect(await screen.findByTestId("desktop-shell")).toBeInTheDocument();
+    const automate = screen.getByRole("button", { name: "Automate" });
+    expect(automate).toBeDisabled();
+    expect(automate).toHaveAttribute("aria-disabled", "true");
   });
 
   it("sheet can render as a centred dialog", () => {

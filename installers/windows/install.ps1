@@ -96,4 +96,8 @@ foreach ($port in @(8080, 9001)) {
   }
 }
 
+$LanIp = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias 'Wi-Fi*', 'Ethernet*' -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notmatch '^(127\.|169\.254\.)' } | Select-Object -First 1).IPAddress
 Write-Host "Done. Open http://localhost:8080/setup (service: $ServiceName)."
+if ($LanIp) {
+  Write-Host "Or from other devices on LAN: http://${LanIp}:8080/setup"
+}
