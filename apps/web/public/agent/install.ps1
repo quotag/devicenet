@@ -10,6 +10,7 @@ param(
   [string]$DataDir = (Join-Path $env:ProgramData 'DeviceNet\data'),
   [string]$PackageUrl = '',
   [string]$PackageSha256 = '',
+  [string]$ApiBaseUrl = '',
   [string]$ServiceName = 'DeviceNetHub',
   [switch]$Uninstall
 )
@@ -28,7 +29,15 @@ function Find-ZigbeePort {
 }
 
 function Invoke-Step([string]$Message, [scriptblock]$Action) {
-  if ($PSCmdlet.ShouldProcess($Message)) { Write-Host "-> $Message"; & $Action }
+  if ($PSCmdlet) {
+    if ($PSCmdlet.ShouldProcess($Message)) { Write-Host "-> $Message"; & $Action }
+    return
+  }
+  if ($WhatIfPreference) {
+    Write-Host "What if: $Message"
+    return
+  }
+  Write-Host "-> $Message"; & $Action
 }
 
 if (-not $WhatIfPreference -and -not (Test-Admin)) { throw 'Run this script from an elevated (Administrator) PowerShell.' }
@@ -41,21 +50,56 @@ if ($Uninstall) {
 }
 
 # 0. Source folder: this script's folder, or a downloaded package (one-liner mode).
+# In one-liner mode (`irm ... | iex`), $PSScriptRoot is empty.
+# We resolve $PackageUrl from passed param, caller variables ($u, $BaseUrl), or environment variables.
+if (-not $PackageUrl) {
+  if ($u) {
+    $PackageUrl = "$u/agent/devicenet-windows-x64.zip"
+  } elseif ($BaseUrl) {
+    $PackageUrl = "$BaseUrl/agent/devicenet-windows-x64.zip"
+  } elseif ($env:DEVICENET_PACKAGE_URL) {
+    $PackageUrl = $env:DEVICENET_PACKAGE_URL
+  }
+}
+if (-not $ApiBaseUrl) {
+  if ($api) {
+    $ApiBaseUrl = $api
+  } elseif ($u) {
+    $ApiBaseUrl = $u
+  } elseif ($BaseUrl) {
+    $ApiBaseUrl = $BaseUrl
+  } elseif ($env:DEVICENET_API_BASE_URL) {
+    $ApiBaseUrl = $env:DEVICENET_API_BASE_URL
+  }
+}
+
 $src = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 if ($PackageUrl) {
   $tmp = Join-Path $env:TEMP ('devicenet-' + [guid]::NewGuid().ToString('N'))
   $zip = "$tmp.zip"
   Invoke-Step "Download $PackageUrl and extract to $tmp" {
     & curl.exe -fsSL --retry 3 -o $zip $PackageUrl   # curl.exe honours the system/corporate proxy
-    if ($LASTEXITCODE -ne 0) { throw 'download failed' }
-    if ($PackageSha256 -and ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $PackageSha256.ToUpper())) { throw 'package sha256 mismatch' }
+    if ($LASTEXITCODE -ne 0) {
+      throw "Download failed from $PackageUrl. Ensure the file exists and the host is reachable."
+    }
+    if ($PackageSha256 -and ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $PackageSha256.ToUpper())) {
+      throw "Package SHA256 mismatch for $PackageUrl"
+    }
     Expand-Archive -Path $zip -DestinationPath $tmp -Force
   }
   $src = $tmp
 }
 if (-not $WhatIfPreference) {
   foreach ($f in @('devicenet-agent.exe', 'DeviceNetHub.exe', 'DeviceNetHub.xml', 'node\node.exe')) {
-    if (-not (Test-Path (Join-Path $src $f))) { throw "Package incomplete: $f missing in $src" }
+    if (-not (Test-Path (Join-Path $src $f))) {
+      $msg = "Package incomplete: $f missing in $src.`n"
+      if (-not $PackageUrl -and (-not $PSScriptRoot -or $src -eq (Get-Location).Path)) {
+        $msg += "If you ran this script via 'irm ... | iex', please ensure the package URL is provided:`n"
+        $msg += "  Example: `$u='http://localhost:5173'; irm `$u/agent/install.ps1 | iex`n"
+        $msg += "NOTE: In local development (pnpm dev:real), hub-agent is already running at http://localhost:8080 (no installation required)."
+      }
+      throw $msg
+    }
   }
 }
 
@@ -72,10 +116,15 @@ $ports = @(Find-ZigbeePort)
 if ($ports.Count -gt 0) { Write-Host "Zigbee dongle on: $($ports -join ', ')" }
 else { Write-Warning 'Zigbee dongle not found (10C4:EA60 / 1A86:55D4). Plug it in; the hub re-detects the port at every start.' }
 $cfgFile = Join-Path $DataDir 'config.yaml'
-Invoke-Step "Write $cfgFile (serialPort: auto, webDir under install dir) if absent" {
+Invoke-Step "Write $cfgFile (serialPort: auto, webDir, apiBaseUrl) if absent" {
   if (-not (Test-Path $cfgFile)) {
     $web = (Join-Path $InstallDir 'web\dist-lan') -replace '\\', '/'
-    Set-Content -Path $cfgFile -Encoding UTF8 -Value @('serialPort: auto', 'lan:', "  webDir: `"$web`"")
+    $lines = @('serialPort: auto')
+    if ($ApiBaseUrl) {
+      $lines += "apiBaseUrl: `"$ApiBaseUrl`""
+    }
+    $lines += @('lan:', "  webDir: `"$web`"")
+    Set-Content -Path $cfgFile -Encoding UTF8 -Value $lines
   }
 }
 

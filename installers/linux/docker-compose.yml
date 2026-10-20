@@ -36,5 +36,6 @@ services:
       # Mosquitto + Z2M are separate containers: the hub must not spawn them (OQ-B21-2)
       DN_EXTERNAL_SERVICES: "1"
       DN_MQTT_HOST: mosquitto
+      DN_API_BASE_URL: ${DN_API_BASE_URL:-http://127.0.0.1:3000}
     volumes:
       - ./data/hub:/data

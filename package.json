@@ -15,7 +15,9 @@
     "dev:real": "node tools/dev/run.mjs --real",
     "smoke": "node tools/smoke/local.mjs",
     "tools:fetch": "node scripts/fetch-tools.mjs",
-    "tools:check": "node tools/check-tools.mjs"
+    "tools:check": "node tools/check-tools.mjs",
+    "agent:build:win": "node installers/windows/build-sea.mjs",
+    "agent:package:win": "node scripts/package-agent-win.mjs"
   },
   "devDependencies": {
     "firebase-tools": "^13.0.0"

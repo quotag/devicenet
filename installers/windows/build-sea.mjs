@@ -115,8 +115,18 @@ step('copy node.exe (for Zigbee2MQTT; a SEA exe cannot act as node)', () => {
 });
 
 step('copy Mosquitto + Zigbee2MQTT -> .tools/', () => {
-  cpSync(join(tools, 'mosquitto'), join(out, '.tools', 'mosquitto'), { recursive: true });
-  cpSync(join(tools, 'zigbee2mqtt'), join(out, '.tools', 'zigbee2mqtt'), { recursive: true, filter: (s) => !/[\\/]\.git([\\/]|$)/.test(s) });
+  if (process.platform === 'win32') {
+    const rc = (src, dst, extra = []) => {
+      const res = spawnSync('robocopy', [src, dst, '/E', '/R:1', '/W:1', '/NP', '/NFL', '/NDL', ...extra], { stdio: 'inherit' });
+      // Robocopy: 0 = no change, 1 = files copied, 2 = extras, 3 = files + extras. >= 8 is error.
+      if (res.status >= 8) throw new Error(`robocopy ${src} -> ${dst} failed (exit ${res.status})`);
+    };
+    rc(join(tools, 'mosquitto'), join(out, '.tools', 'mosquitto'));
+    rc(join(tools, 'zigbee2mqtt'), join(out, '.tools', 'zigbee2mqtt'), ['/XD', '.git']);
+  } else {
+    cpSync(join(tools, 'mosquitto'), join(out, '.tools', 'mosquitto'), { recursive: true });
+    cpSync(join(tools, 'zigbee2mqtt'), join(out, '.tools', 'zigbee2mqtt'), { recursive: true, filter: (s) => !/[\\/]\.git([\\/]|$)/.test(s) });
+  }
 });
 
 step('web dist-lan (pnpm --filter @devicenet/web build:lan) -> web/dist-lan', () => {

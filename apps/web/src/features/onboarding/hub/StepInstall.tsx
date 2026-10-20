@@ -15,7 +15,8 @@ export function StepInstall({ onNext }: { onNext: () => void }) {
     (typeof window !== "undefined" && window.location.origin
       ? window.location.origin
       : "https://[YOUR-DOMAIN]");
-  const commands = t.installCmd(baseUrl);
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const commands = t.installCmd(baseUrl, apiUrl);
 
   const copy = () => {
     void navigator.clipboard?.writeText(commands[os]!).then(

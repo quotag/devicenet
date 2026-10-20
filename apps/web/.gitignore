@@ -1,1 +1,3 @@
 dist-lan/
+public/agent/*.zip
+public/agent/*.sha256
