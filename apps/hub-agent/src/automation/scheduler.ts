@@ -53,6 +53,8 @@ interface Entry {
 }
 
 const DEFAULT_TZ = 'Asia/Ho_Chi_Minh';
+/** Max delay for a single setTimeout call to stay safely below 32-bit signed integer limit (~24.8 days) */
+export const MAX_TIMEOUT_MS = 24 * 86_400_000;
 /** missed-run check only applies to rules seen within this long after start (rules arrive from sync) */
 const MISSED_GRACE_MS = 10 * 60_000;
 
@@ -209,7 +211,9 @@ export class Scheduler {
     e.nextAt = at ?? undefined;
     if (at === null) return;
     const planned = at;
-    e.timer = this.timers.setTimeout(() => this.due(e, planned), Math.max(0, planned - now));
+    const delay = Math.max(0, planned - now);
+    const sleepMs = Math.min(delay, MAX_TIMEOUT_MS);
+    e.timer = this.timers.setTimeout(() => this.due(e, planned), sleepMs);
   }
 
   private due(e: Entry, planned: number): void {
@@ -217,8 +221,10 @@ export class Scheduler {
     if (this.entries.get(e.compiled.id) !== e) return;
     const now = this.clock.now();
     if (now < planned) {
-      // real timers can wake early; wait the remainder
-      e.timer = this.timers.setTimeout(() => this.due(e, planned), planned - now);
+      // real timers can wake early or chained 24-day chunk; wait the remainder
+      const remainder = planned - now;
+      const sleepMs = Math.min(remainder, MAX_TIMEOUT_MS);
+      e.timer = this.timers.setTimeout(() => this.due(e, planned), sleepMs);
       return;
     }
     if ((this.lastFired.get(e.compiled.id) ?? -Infinity) < planned) {

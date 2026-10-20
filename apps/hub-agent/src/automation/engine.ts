@@ -5,7 +5,7 @@ import type { HubEventBody } from '../core/events.js';
 import type { Registry, RegistryChange } from '../core/registry.js';
 import type { ConfigStore } from '../sync/ConfigStore.js';
 import { buildIndex, compileRule, type CompiledRule } from './compile.js';
-import type { ConditionContext, SiteInfo } from './conditions.js';
+import { same, type ConditionContext, type SiteInfo } from './conditions.js';
 
 type Log = { warn(obj: object, msg?: string): void; debug?(obj: object, msg?: string): void };
 
@@ -31,8 +31,8 @@ export interface AutomationEngineOptions {
 
 interface Slot {
   compiled: CompiledRule;
-  /** last value of the trigger expression (rising-edge detection) */
-  prev: boolean;
+  /** last active state (rising-edge detection: trigger matches && not already at target) */
+  prevActive: boolean;
   timer?: TimerHandle;
 }
 
@@ -134,7 +134,16 @@ export class AutomationEngine {
         next.set(rule.id, old);
         continue;
       }
-      next.set(rule.id, { compiled: res.compiled, prev: this.seed(res.compiled) });
+      const initialPrev = this.seed(res.compiled);
+      const slot: Slot = { compiled: res.compiled, prevActive: initialPrev };
+      next.set(rule.id, slot);
+      const nowActive = this.isSlotActive(slot);
+      if (!initialPrev && nowActive) {
+        slot.prevActive = true;
+        if (res.compiled.trigger && res.compiled.trigger.forMs > 0) {
+          slot.timer = this.timers.setTimeout(() => this.onTimerDue(slot), res.compiled.trigger.forMs);
+        }
+      }
     }
     for (const [id, s] of this.slots) if (next.get(id) !== s) s.timer?.cancel();
     this.slots = next;
@@ -142,11 +151,42 @@ export class AutomationEngine {
     this.index = buildIndex(this.slots.values());
   }
 
-  /** `prev` = expression on the current state → a value already true at load does not fire. */
+  /**
+   * Determine initial active state for a slot:
+   * - If rule has targets (e.g. setProperty) and a duration (forMs > 0):
+   *   we start with prevActive = false so that if it is currently active,
+   *   it will arm the duration timer cleanly (and not fire immediately).
+   * - Otherwise, prevActive seeds from current expression (Constitution VI: no fire at load).
+   */
   private seed(c: CompiledRule): boolean {
     const t = c.trigger;
     if (!t || t.changed) return false;
+    if (c.targets.length > 0 && t.forMs > 0) {
+      return false;
+    }
     return t.test(this.value(t.deviceId, t.property));
+  }
+
+  /**
+   * Check if a slot is currently active:
+   * 1. Trigger condition must be satisfied on current state.
+   * 2. If the rule has setProperty action targets, at least one target property must NOT be at targetValue.
+   */
+  private isSlotActive(slot: Slot): boolean {
+    const t = slot.compiled.trigger;
+    if (!t) return false;
+    if (t.changed) return false;
+    const triggerVal = this.value(t.deviceId, t.property);
+    if (!t.test(triggerVal)) return false;
+
+    if (slot.compiled.targets.length > 0) {
+      const notAtTarget = slot.compiled.targets.some((tgt) => {
+        const cur = this.value(tgt.deviceId, tgt.property);
+        return !same(cur, tgt.targetValue);
+      });
+      if (!notAtTarget) return false;
+    }
+    return true;
   }
 
   private value(deviceId: string, property: string): PropertyValue | undefined {
@@ -177,34 +217,42 @@ export class AutomationEngine {
       const list = this.index.get(`${deviceId}.${property}`);
       if (!list) continue;
       const value = c.entry.values[property];
-      for (const slot of [...list]) this.evaluate(slot, value);
+      for (const slot of [...list]) this.evaluate(slot, deviceId, property, value);
     }
   }
 
-  private evaluate(slot: Slot, value: PropertyValue | undefined): void {
+  private evaluate(slot: Slot, changedDeviceId: string, changedProperty: string, changedValue: PropertyValue | undefined): void {
     const t = slot.compiled.trigger!;
     if (t.changed) {
-      this.fire(slot, value);
+      if (t.deviceId === changedDeviceId && t.property === changedProperty) {
+        this.fire(slot, changedValue);
+      }
       return;
     }
-    const now = t.test(value);
-    const prev = slot.prev;
-    slot.prev = now;
-    if (!prev && now) {
+    const nowActive = this.isSlotActive(slot);
+    const prevActive = slot.prevActive;
+    slot.prevActive = nowActive;
+    if (!prevActive && nowActive) {
       if (t.forMs > 0) {
         slot.timer?.cancel();
-        slot.timer = this.timers.setTimeout(() => {
-          slot.timer = undefined;
-          if (this.slots.get(slot.compiled.id) !== slot) return;
-          const v = this.value(t.deviceId, t.property);
-          if (t.test(v)) this.fire(slot, v);
-        }, t.forMs);
+        slot.timer = this.timers.setTimeout(() => this.onTimerDue(slot), t.forMs);
       } else {
-        this.fire(slot, value);
+        const triggerVal = this.value(t.deviceId, t.property);
+        this.fire(slot, triggerVal);
       }
-    } else if (prev && !now && slot.timer) {
+    } else if (prevActive && !nowActive && slot.timer) {
       slot.timer.cancel();
       slot.timer = undefined;
+    }
+  }
+
+  private onTimerDue(slot: Slot): void {
+    slot.timer = undefined;
+    if (this.slots.get(slot.compiled.id) !== slot) return;
+    if (this.isSlotActive(slot)) {
+      const t = slot.compiled.trigger!;
+      const v = this.value(t.deviceId, t.property);
+      this.fire(slot, v);
     }
   }
 

@@ -4,7 +4,7 @@ import { FakeTime } from '../../src/core/clock.js';
 import { compileRule, type CompiledRule } from '../../src/automation/compile.js';
 import { AutomationEngine } from '../../src/automation/engine.js';
 import type { SiteInfo } from '../../src/automation/conditions.js';
-import { lastScheduleFireIn, Scheduler, type ScheduledFire } from '../../src/automation/scheduler.js';
+import { lastScheduleFireIn, MAX_TIMEOUT_MS, Scheduler, type ScheduledFire } from '../../src/automation/scheduler.js';
 import { localNoon, nextSunFire, nextSunRecompute, sunEventAt } from '../../src/automation/sun.js';
 import { makeRule, plugRegistry, TZ } from './helpers.js';
 
@@ -208,6 +208,34 @@ describe('Missed schedule on boot (spec §8, OQ-6)', () => {
     const t = { type: 'schedule' as const, at: '23:00' };
     expect(lastScheduleFireIn(t, TZ, vn(2026, 10, 15, 0), vn(2026, 10, 18, 23, 0))).toBe(vn(2026, 10, 18, 23, 0));
     expect(lastScheduleFireIn(t, TZ, vn(2026, 10, 18, 23, 0), vn(2026, 10, 18, 23, 30))).toBeNull();
+  });
+
+  it('chained timeout chunks delays > MAX_TIMEOUT_MS (24 days) safely', () => {
+    const start = vn(2026, 1, 1, 0, 0);
+    const s = setup(start);
+    const r = sched('10:00');
+    const c = compile(r);
+    const targetTime = start + 60 * 86_400_000; // 60 days in future
+    (s.scheduler as unknown as { nextFor: (e: unknown, after: number) => number | null }).nextFor = (_e, after) =>
+      after < targetTime ? targetTime : null;
+    s.scheduler.load([c]);
+
+    // Should have a timer set for MAX_TIMEOUT_MS (24 days)
+    expect(s.time.pending()).toBe(1);
+    // Advance 24 days -> wakes up, remaining is 36 days (> 24 days), chains another 24 days
+    s.time.advance(24 * 86_400_000);
+    expect(s.fires).toHaveLength(0);
+    expect(s.time.pending()).toBe(1);
+
+    // Advance another 24 days -> wakes up, remaining is 12 days (<= 24 days), chains 12 days
+    s.time.advance(24 * 86_400_000);
+    expect(s.fires).toHaveLength(0);
+    expect(s.time.pending()).toBe(1);
+
+    // Advance remaining 12 days -> reaches targetTime, fires!
+    s.time.advance(12 * 86_400_000);
+    expect(s.fires).toHaveLength(1);
+    expect(s.fires[0]!.at).toBe(targetTime);
   });
 });
 

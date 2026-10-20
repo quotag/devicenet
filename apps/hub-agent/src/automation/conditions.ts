@@ -25,7 +25,7 @@ export interface ConditionContext {
 
 export type Predicate = (cx: ConditionContext) => boolean;
 
-const same = (a: unknown, b: unknown): boolean =>
+export const same = (a: unknown, b: unknown): boolean =>
   a === b || (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null && JSON.stringify(a) === JSON.stringify(b));
 
 /** Compare a live value against a rule value. Ordering ops only apply to numbers. `changed` is handled by the trigger. */

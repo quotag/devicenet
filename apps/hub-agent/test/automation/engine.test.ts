@@ -1,14 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Rule } from '@devicenet/shared';
+import type { Device, Rule } from '@devicenet/shared';
 import { FakeTime } from '../../src/core/clock.js';
 import { AutomationEngine, type RuleFire } from '../../src/automation/engine.js';
 import { brokenReason, buildIndex, compileRule } from '../../src/automation/compile.js';
 import { newId } from '../../src/core/ids.js';
 import { makeRule, plugRegistry, TZ } from './helpers.js';
+import { makeDevice } from '../core/helpers.js';
 
-function setup(initial: Record<string, unknown>, rules: (devId: string) => Rule[], extra: Partial<ConstructorParameters<typeof AutomationEngine>[0]> = {}) {
+function setup(
+  initial: Record<string, unknown>,
+  rules: (devId: string) => Rule[],
+  extra: Partial<ConstructorParameters<typeof AutomationEngine>[0]> = {},
+  deviceOver: Partial<Device> = {},
+) {
   const time = new FakeTime(Date.UTC(2026, 9, 18, 3, 0)); // 10:00 Asia/Ho_Chi_Minh
-  const p = plugRegistry(initial);
+  const p = plugRegistry(initial, deviceOver);
   const fires: RuleFire[] = [];
   const engine = new AutomationEngine({ registry: p.registry, clock: time, timers: time, site: { timezone: TZ }, onFire: (f) => fires.push(f), ...extra });
   engine.attach();
@@ -19,6 +25,12 @@ function setup(initial: Record<string, unknown>, rules: (devId: string) => Rule[
 
 const lowPower = (deviceId: string, forS?: number) =>
   makeRule({ trigger: { type: 'property', deviceId, property: 'power', op: 'lt', value: 5, ...(forS ? { for: forS } : {}) } });
+
+const autoOffRule = (deviceId: string, forS = 60, targetProp = 'state') =>
+  makeRule({
+    trigger: { type: 'property', deviceId, property: 'power', op: 'lt', value: 5, for: forS },
+    actions: [{ type: 'setProperty', deviceId, property: targetProp, value: false }],
+  });
 
 describe('AutomationEngine — property triggers (constitution VI)', () => {
   it('fires only on the rising edge', () => {
@@ -219,5 +231,72 @@ describe('compile + broken rules', () => {
     s.engine.refresh();
     expect(s.time.pending()).toBe(0);
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'rule.broken', reason: `device_removed:${s.device.id}` }));
+  });
+
+  describe('output target state awareness (current !== target)', () => {
+    it('initial load with power=0 and state=true arms timer and fires after 60s', () => {
+      const s = setup({ power: 0, state: true }, (d) => [autoOffRule(d, 60)]);
+      expect(s.fires).toHaveLength(0);
+      s.time.advance(59_000);
+      expect(s.fires).toHaveLength(0);
+      s.time.advance(1_000);
+      expect(s.fires).toHaveLength(1);
+      expect(s.fires[0]!.trigger).toEqual({ deviceId: s.device.id, property: 'power', value: 0 });
+    });
+
+    it('initial load with state=false (already at target) does not arm timer', () => {
+      const s = setup({ power: 0, state: false }, (d) => [autoOffRule(d, 60)]);
+      s.time.advance(3_600_000);
+      expect(s.fires).toHaveLength(0);
+    });
+
+    it('manual turn on (state: false -> true) while power is 0 arms timer and fires after 60s', () => {
+      const s = setup({ power: 0, state: false }, (d) => [autoOffRule(d, 60)]);
+      expect(s.fires).toHaveLength(0);
+      // User manually turns on the switch
+      s.report({ state: true });
+      s.time.advance(59_000);
+      expect(s.fires).toHaveLength(0);
+      s.time.advance(1_000);
+      expect(s.fires).toHaveLength(1);
+    });
+
+    it('manual turn off while timer is running cancels timer', () => {
+      const s = setup({ power: 0, state: false }, (d) => [autoOffRule(d, 60)]);
+      s.report({ state: true });
+      s.time.advance(30_000);
+      // User manually turns off the switch at 30s
+      s.report({ state: false });
+      s.time.advance(60_000);
+      expect(s.fires).toHaveLength(0);
+    });
+
+    it('power rising >= 5W while timer is running cancels timer', () => {
+      const s = setup({ power: 0, state: true }, (d) => [autoOffRule(d, 60)]);
+      s.time.advance(30_000);
+      // Heavy appliance turns on -> power = 100W
+      s.report({ power: 100 });
+      s.time.advance(60_000);
+      expect(s.fires).toHaveLength(0);
+    });
+
+    it('multi-gang switch: action targets state_l2, state_l1 change does not trigger', () => {
+      const binProp = (key: string): any => ({ key, label: key, type: 'binary', access: 'rw', category: 'control' });
+      const baseDevice = makeDevice();
+      const s = setup(
+        { power: 0, state_l1: false, state_l2: false },
+        (d) => [autoOffRule(d, 60, 'state_l2')],
+        {},
+        { properties: { ...baseDevice.properties, state_l1: binProp('state_l1'), state_l2: binProp('state_l2') } },
+      );
+      expect(s.engine.brokenReason(s.rules[0]!.id)).toBeUndefined();
+      s.report({ state_l1: true });
+      s.time.advance(120_000);
+      expect(s.fires).toHaveLength(0);
+
+      s.report({ state_l2: true });
+      s.time.advance(60_000);
+      expect(s.fires).toHaveLength(1);
+    });
   });
 });

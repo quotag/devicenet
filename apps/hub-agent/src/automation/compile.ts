@@ -18,6 +18,13 @@ export interface CompiledPropertyTrigger {
   forMs: number;
 }
 
+export interface CompiledTarget {
+  key: string;
+  deviceId: string;
+  property: string;
+  targetValue: PropertyValue;
+}
+
 export interface CompiledRule {
   rule: Rule;
   id: string;
@@ -25,6 +32,7 @@ export interface CompiledRule {
   /** null for schedule/sun triggers (B16 owns them) */
   trigger: CompiledPropertyTrigger | null;
   conditions: Predicate;
+  targets: CompiledTarget[];
 }
 
 export type CompileResult = { ok: true; compiled: CompiledRule } | { ok: false; reason: string };
@@ -82,18 +90,40 @@ export function compileRule(rule: Rule, lookup: DeviceLookup, site?: SiteInfo | 
       forMs: changed ? 0 : (t.for ?? 0) * 1000,
     };
   }
-  return { ok: true, compiled: { rule, id: rule.id, rev: rule.rev, trigger, conditions: compileConditions(rule.conditions) } };
+  const targets: CompiledTarget[] = [];
+  for (const a of rule.actions) {
+    if (a.type === 'setProperty') {
+      targets.push({
+        key: propKey(a.deviceId, a.property),
+        deviceId: a.deviceId,
+        property: a.property,
+        targetValue: a.value,
+      });
+    }
+  }
+  return { ok: true, compiled: { rule, id: rule.id, rev: rule.rev, trigger, conditions: compileConditions(rule.conditions), targets } };
 }
 
-/** Index property-triggered rules by `"dev.prop"`. */
+/** Index property-triggered rules by `"dev.prop"` (both trigger keys and action target keys). */
 export function buildIndex<T extends { compiled: CompiledRule }>(items: Iterable<T>): Map<string, T[]> {
   const idx = new Map<string, T[]>();
-  for (const it of items) {
-    const k = it.compiled.trigger?.key;
-    if (!k) continue;
+  const add = (k: string, it: T) => {
     const list = idx.get(k);
-    if (list) list.push(it);
-    else idx.set(k, [it]);
+    if (list) {
+      if (!list.includes(it)) list.push(it);
+    } else {
+      idx.set(k, [it]);
+    }
+  };
+  for (const it of items) {
+    const tk = it.compiled.trigger?.key;
+    if (tk) add(tk, it);
+    // Index target keys as well so manual state changes trigger evaluation
+    if (it.compiled.trigger) {
+      for (const tgt of it.compiled.targets) {
+        add(tgt.key, it);
+      }
+    }
   }
   return idx;
 }
