@@ -146,10 +146,14 @@ export async function stopProc(child, graceMs = 3000) {
 }
 
 export function emulatorsProc(opts = {}) {
+  const emuDir = join(repoRoot, '.data', 'emulators');
+  const args = [firebaseCli(), 'emulators:start', '--only', 'auth,firestore', '--project', EMU.project];
+  if (existsSync(emuDir)) args.push(`--import=${emuDir}`);
+  args.push(`--export-on-exit=${emuDir}`);
   return startProc(
     'emu',
     process.execPath,
-    [firebaseCli(), 'emulators:start', '--only', 'auth,firestore', '--project', EMU.project],
+    args,
     { env: cleanEnv({ ...opts.env }, { keepProxy: true }), quiet: opts.quiet, onLine: opts.onLine },
   );
 }

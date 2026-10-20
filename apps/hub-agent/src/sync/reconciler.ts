@@ -67,14 +67,28 @@ export class Reconciler {
   async reconcile(): Promise<{ devices: number; events: number }> {
     await Promise.race([this.deviceSync.firstDevices, new Promise((r) => setTimeout(r, this.o.firstSnapshotTimeoutMs ?? 10_000))]);
     let devices = 0;
+    for (const e of this.o.registry.all()) {
+      if (e.device.status === 'removed') continue;
+      if (!this.deviceSync.remote.has(e.device.id)) {
+        try {
+          await this.deviceSync.push(e.device);
+          this.o.registry.markSynced(e.device.id, true);
+          devices++;
+        } catch (err) {
+          this.o.log?.warn({ deviceId: e.device.id, err: (err as Error).message }, 'device reconcile push failed');
+        }
+      }
+    }
     for (const row of this.o.db.devices.unsynced()) {
-      try {
-        await this.deviceSync.push(row.doc);
-        if (this.o.registry.get(row.id)) this.o.registry.markSynced(row.id, true);
-        else this.o.db.devices.setSynced(row.id, true);
-        devices++;
-      } catch (e) {
-        this.o.log?.warn({ deviceId: row.id, err: (e as Error).message }, 'device reconcile failed');
+      if (this.deviceSync.remote.has(row.id)) {
+        try {
+          await this.deviceSync.push(row.doc);
+          if (this.o.registry.get(row.id)) this.o.registry.markSynced(row.id, true);
+          else this.o.db.devices.setSynced(row.id, true);
+          devices++;
+        } catch (e) {
+          this.o.log?.warn({ deviceId: row.id, err: (e as Error).message }, 'device reconcile failed');
+        }
       }
     }
     const events = await this.uploader.flush();

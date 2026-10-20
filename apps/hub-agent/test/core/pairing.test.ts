@@ -153,6 +153,40 @@ describe('Pairing + mock Z2M', () => {
     expect([...s.cfg.devices.values()][0]).toMatchObject({ status: 'new', externalId: fixtureDevice.ieee_address });
   });
 
+  it('re-pair during active window: known device with old hub/site identity is migrated, recreated in store (status new), and added to pairing.found', async () => {
+    s = await startStack({ withDevice: false });
+    const oldDev = Device.parse({
+      id: 'dev_01M5A000000000000000000001',
+      hubId: 'hub_01M5A000000000000000000001',
+      siteId: 'site_01M5A000000000000000000001',
+      roomId: null,
+      driver: 'zigbee2mqtt',
+      externalId: NEW_IEEE,
+      name: 'Old Plug',
+      icon: 'plug',
+      properties: buildProperties(fixtureDevice.definition.exposes),
+      status: 'active',
+      createdAt: 1000,
+      updatedAt: 1000,
+    });
+    s.core.registry.insert(oldDev, { friendlyName: oldDev.id, synced: true });
+
+    const ack = await s.core.pairing.start(60);
+    expect(ack.ok).toBe(true);
+
+    s.mock.emitInterview(NEW_IEEE);
+
+    await until(() => s.cfg.devices.size === 1);
+    const doc = Device.parse([...s.cfg.devices.values()][0]);
+    expect(doc.id).toBe(oldDev.id);
+    expect(doc.hubId).toBe(IDENTITY.hubId);
+    expect(doc.siteId).toBe(IDENTITY.siteId);
+    expect(doc.status).toBe('new');
+
+    await until(() => s.sent.some((m) => m.topic === pairingTopic && m.json.found?.includes(oldDev.id)));
+    await until(() => eventsOf('device.found').length === 1);
+  });
+
   it('unclaimed hub: no device creation, nothing published', async () => {
     s = await startStack({ withDevice: true, claimed: false });
     await new Promise((r) => setTimeout(r, 300));

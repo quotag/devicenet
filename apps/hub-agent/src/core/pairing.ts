@@ -1,6 +1,7 @@
 import type { Device, PropertyMap } from '@devicenet/shared';
 import type { DiscoveredDevice, Driver } from '../drivers/Driver.js';
 import type { ConfigStore } from '../sync/ConfigStore.js';
+import { hubFieldsOf } from '../sync/deviceSync.js';
 import type { Clock, TimerHandle, TimerHost } from './clock.js';
 import { realClock, realTimers } from './clock.js';
 import type { HubEvents } from './events.js';
@@ -130,13 +131,67 @@ export class PairingManager {
 
   /** Wire to `driver.onDeviceDiscovered`. Creates devices unknown to the registry (interview + FR-H06 recovery). */
   async onDiscovered(d: DiscoveredDevice): Promise<string | null> {
+    if (this.creating.has(d.externalId)) return null;
     const known = this.o.registry.getByExternalId(d.externalId);
+    const id = this.o.publisher.getIdentity();
+
     if (known) {
       this.o.registry.setFriendlyName(known.device.id, d.friendlyName);
+      if (!id) return null;
+
+      const devId = known.device.id;
+      const mismatch = known.device.hubId !== id.hubId || known.device.siteId !== id.siteId;
+      if (this.active || mismatch) {
+        this.creating.add(d.externalId);
+        try {
+          if (mismatch) {
+            known.device.hubId = id.hubId;
+            known.device.siteId = id.siteId;
+          }
+          if (this.active && known.device.status !== 'new') {
+            known.device.status = 'new';
+          }
+          this.o.registry.updateDevice(devId, {
+            hubId: known.device.hubId,
+            siteId: known.device.siteId,
+            status: known.device.status,
+          });
+
+          const store = this.o.configStore();
+          if (store) {
+            try {
+              await store.createDevice(known.device);
+              this.o.registry.markSynced(devId, true);
+            } catch {
+              try {
+                await store.updateDeviceHubFields(devId, hubFieldsOf(known.device, { includeStatus: false }));
+              } catch (e2) {
+                this.o.log?.warn({ deviceId: devId, err: (e2 as Error).message }, 'Firestore sync failed');
+              }
+            }
+          }
+
+          this.o.events.emit({
+            type: 'device.found',
+            deviceId: devId,
+            model: d.model ?? known.device.model ?? 'unknown',
+            ...(d.vendor ?? known.device.vendor ? { vendor: (d.vendor ?? known.device.vendor)! } : {}),
+          });
+
+          if (this.active && !this.found.includes(devId)) {
+            this.found.push(devId);
+            this.publish();
+          }
+          this.o.publisher.stateChanged(devId);
+          return devId;
+        } finally {
+          this.creating.delete(d.externalId);
+        }
+      }
       return null;
     }
-    if (!d.interviewed || this.creating.has(d.externalId)) return null;
-    const id = this.o.publisher.getIdentity();
+
+    if (!d.interviewed) return null;
     if (!id) return null; // unclaimed: no siteId/hubId → created after claim (recovery path)
     this.creating.add(d.externalId);
     try {

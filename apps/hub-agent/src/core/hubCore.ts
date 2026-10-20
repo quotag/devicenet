@@ -189,7 +189,15 @@ export function createHubCore(o: HubCoreOptions): HubCore {
     automation,
     setIdentity(id) {
       publisher.setIdentity(id);
-      if (id) lifecycle.recover().catch((err) => o.log?.warn({ err: (err as Error)?.message }, 'recovery'));
+      if (id) {
+        for (const e of registry.all()) {
+          if (e.device.hubId !== id.hubId || e.device.siteId !== id.siteId) {
+            registry.updateDevice(e.device.id, { hubId: id.hubId, siteId: id.siteId, status: 'new' });
+            registry.markSynced(e.device.id, false);
+          }
+        }
+        lifecycle.recover().catch((err) => o.log?.warn({ err: (err as Error)?.message }, 'recovery'));
+      }
     },
     subscriptions() {
       const id = publisher.getIdentity();

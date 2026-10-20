@@ -109,10 +109,14 @@ export class DeviceLifecycle {
 
   /** FR-H06: Z2M devices without a registry entry -> create `status:"new"` (needs identity). */
   async recover(): Promise<number> {
-    if (!this.o.publisher.getIdentity()) return 0;
+    const id = this.o.publisher.getIdentity();
+    if (!id) return 0;
     let n = 0;
     for (const d of this.o.driver.knownDevices?.() ?? []) {
-      if (this.o.registry.getByExternalId(d.externalId)) continue;
+      const known = this.o.registry.getByExternalId(d.externalId);
+      if (known && known.device.hubId === id.hubId && known.device.siteId === id.siteId && known.synced) {
+        continue;
+      }
       try {
         if (await this.o.pairing.onDiscovered(d)) n++;
       } catch (e) {
