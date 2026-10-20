@@ -56,16 +56,27 @@ describe('LAN server', () => {
     expect((await app.inject({ url: '/api/health', remoteAddress: '192.168.1.9' })).statusCode).toBe(200);
   });
 
-  it('setup shows code + QR; claimed state', async () => {
+  it('setup shows code + QR; claimed state with reset button', async () => {
     const { app } = mk();
     const r = await app.inject('/setup');
     expect(r.statusCode).toBe(200);
     expect(r.body).toContain('ABCD2345');
     expect(r.body).toContain('<svg');
-    const { app: a2 } = mk({ getClaim: () => ({ claimed: true }) });
+    let resetCalled = false;
+    const { app: a2 } = mk({
+      getClaim: () => ({ claimed: true }),
+      resetClaim: async () => {
+        resetCalled = true;
+      },
+    });
     const r2 = await a2.inject('/setup');
     expect(r2.body).toContain('đã được liên kết');
+    expect(r2.body).toContain('id="reset-btn"');
     expect(r2.body).not.toContain('<svg');
+    const rPost = await a2.inject({ method: 'POST', url: '/setup/reset' });
+    expect(rPost.statusCode).toBe(303);
+    expect(rPost.headers.location).toBe('/setup');
+    expect(resetCalled).toBe(true);
   });
 
   it('static: missing dir shows notice; built dir serves files + SPA fallback', async () => {

@@ -110,6 +110,17 @@ describe('ClaimClient (stub api)', () => {
     expect(await client.start()).toEqual(cred);
     expect(client.current()).toEqual({ claimed: true });
     expect(api.codes).toHaveLength(0);
+
+    // reset() clears credentials and requests a new code
+    let unclaimedFired = false;
+    client.on('unclaimed', () => {
+      unclaimedFired = true;
+    });
+    await client.reset();
+    expect(unclaimedFired).toBe(true);
+    expect(readCredentials(opts.credentialsPath)).toBeNull();
+    await waitFor(() => client.current().code === 'ABCDEF22');
+    expect(client.current().claimed).toBe(false);
   });
 
   it('stop() halts polling', async () => {

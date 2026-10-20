@@ -43,6 +43,7 @@ export interface LanDeps {
   /** resolved path of the LAN web build (config lan.webDir) */
   webDir: string;
   now?: () => number;
+  resetClaim?: () => Promise<void>;
 }
 
 export interface LanServerOptions {

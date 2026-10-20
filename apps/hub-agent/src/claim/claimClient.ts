@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import type { Logger } from '../log/index.js';
 import { realClock, realTimers, type Clock, type TimerHandle, type TimerHost } from '../core/clock.js';
-import { HubCredential, readCredentials, writeCredentials } from './credentials.js';
+import { HubCredential, deleteCredentials, readCredentials, writeCredentials } from './credentials.js';
 import { httpJson, type HttpJson } from './http.js';
 import { loadOrCreateKeyPair, openSealed, type HubKeyPair } from './keys.js';
 
@@ -34,6 +34,7 @@ export interface ClaimClientOptions {
 export interface ClaimClientEvents {
   claimed: [HubCredential];
   code: [{ code: string; expiresAt: number }];
+  unclaimed: [];
 }
 
 const hhmm = (ms: number) => {
@@ -107,6 +108,22 @@ export class ClaimClient extends EventEmitter<ClaimClientEvents> {
     this.timer?.cancel();
     this.timer = null;
     if (this.phase !== 'claimed') this.phase = 'stopped';
+  }
+
+  /**
+   * Reset claim state: deletes credentials.json, stops active timers,
+   * transitions to 'requesting' and requests a new claim code.
+   */
+  async reset(): Promise<void> {
+    this.stop();
+    this.credential = null;
+    this.code = undefined;
+    this.expiresAt = undefined;
+    deleteCredentials(this.o.credentialsPath);
+    this.keys = await loadOrCreateKeyPair(this.o.hubKeyPath);
+    this.phase = 'requesting';
+    this.emit('unclaimed');
+    void this.requestCode();
   }
 
   private schedule(fn: () => Promise<void>, ms: number): void {

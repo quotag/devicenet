@@ -248,4 +248,26 @@ export class FirestoreConfigStore implements ConfigStore {
       };
     });
   }
+
+  onHubDeleted(cb: () => void): Unsubscribe {
+    return this.subscribe(() => {
+      const hubRef = this.ref('hubs', this.cred.hubId);
+      return onSnapshot(
+        hubRef,
+        (snap) => {
+          if (!snap.exists()) {
+            this.o.log?.warn({ hubId: this.cred.hubId }, 'hub document deleted on cloud');
+            cb();
+          }
+        },
+        (err) => {
+          this.o.log?.warn({ err: err.message }, 'hub document listener error');
+          const code = (err as unknown as { code?: string })?.code;
+          if (code === 'permission-denied' || code === 'not-found') {
+            cb();
+          }
+        },
+      );
+    });
+  }
 }

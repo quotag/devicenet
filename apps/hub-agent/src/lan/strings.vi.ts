@@ -6,6 +6,8 @@ export const S = {
   expired: 'Mã đã hết hạn. Khởi động lại hub để tạo mã mới.',
   noCode: 'Chưa có mã liên kết. Vui lòng đợi giây lát rồi tải lại trang.',
   claimed: 'Hub đã được liên kết (claim).',
+  resetButton: 'Đặt lại (Reset) để lấy mã mới',
+  resetConfirm: 'Bạn có chắc chắn muốn hủy liên kết hub này và tạo mã mới?',
   webNotBuilt: 'LAN web chưa build',
   webNotBuiltHint: 'Chạy build LAN của apps/web để có giao diện tại đây.',
   forbidden: 'Chỉ truy cập được từ mạng nội bộ.',

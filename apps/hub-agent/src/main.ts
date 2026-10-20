@@ -122,6 +122,26 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
     log,
   });
 
+  let stopping = false;
+  let signInTimer: NodeJS.Timeout | undefined;
+
+  const goUnclaimed = async () => {
+    log.info('Hub unclaiming / resetting credentials');
+    if (signInTimer) {
+      clearTimeout(signInTimer);
+      signInTimer = undefined;
+    }
+    core.automation.sync.detach();
+    reconciler?.stop();
+    reconciler = null;
+    await configStore?.close().catch(() => {});
+    configStore = null;
+    await bridge.disconnectCloud().catch(() => {});
+    core.setIdentity(null);
+    bridge.identityChanged();
+    await claim.reset();
+  };
+
   let lan: Awaited<ReturnType<typeof startLanServer>> | null = null;
   if (cfg.lan.enabled) {
     const webDir = isAbsolute(cfg.lan.webDir) ? cfg.lan.webDir : resolve(findRepoRoot(), cfg.lan.webDir);
@@ -139,6 +159,7 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
             ...(supHealth.lastError ? { lastError: supHealth.lastError } : {}),
           }),
           getClaim: () => claim.current(),
+          resetClaim: () => goUnclaimed(),
           getIdentity: () => core.publisher.getIdentity(),
           snapshot: store.snapshot,
           history: store.history,
@@ -153,14 +174,19 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
     }
   }
 
-  let stopping = false;
-  let signInTimer: NodeJS.Timeout | undefined;
   const signIn = (s: FirestoreConfigStore, delay = 5_000) => {
     s.connect().then(
       () => log.info('Firestore signed in'),
       (e) => {
         if (stopping || configStore !== s) return;
-        log.warn({ err: (e as Error).message, retryInMs: delay }, 'Firestore sign-in failed');
+        const msg = (e as Error)?.message ?? '';
+        const status = (e as { status?: number })?.status;
+        log.warn({ err: msg, retryInMs: delay }, 'Firestore sign-in failed');
+        if (status === 401 || status === 404 || msg.includes('401') || msg.includes('404')) {
+          log.warn('Hub credentials invalid/revoked on cloud; unclaiming');
+          void goUnclaimed();
+          return;
+        }
         signInTimer = setTimeout(() => signIn(s, Math.min(delay * 2, 60_000)), delay);
       },
     );
@@ -171,6 +197,11 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
     bridge.identityChanged();
     const s = new FirestoreConfigStore({ credentialsPath: paths.credentials, credential: cred, emulator: cfg.emulator, log });
     configStore = s;
+    s.onHubDeleted(() => {
+      if (stopping || configStore !== s) return;
+      log.warn('Hub was deleted on cloud; unclaiming local agent');
+      void goUnclaimed();
+    });
     const r = new Reconciler({ store: s, registry: core.registry, db: store, log });
     reconciler = r;
     r.start();
@@ -191,9 +222,11 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
   };
 
   claim.on('code', ({ code }) => {
-    if (lan) log.info(`Mở http://127.0.0.1:${cfg.lan.port}/setup để xem mã claim ${code}`);
+    const ip = primaryIpv4();
+    const lanMsg = ip ? ` hoặc http://${ip}:${cfg.lan.port}/setup` : '';
+    if (lan) log.info(`Mở http://localhost:${cfg.lan.port}/setup${lanMsg} để xem mã claim ${code}`);
   });
-  claim.once('claimed', (cred) => void goClaimed(cred).catch((e) => log.error({ err: (e as Error).message }, 'claimed transition failed')));
+  claim.on('claimed', (cred) => void goClaimed(cred).catch((e) => log.error({ err: (e as Error).message }, 'claimed transition failed')));
   const existing = await claim.start();
   if (existing) await goClaimed(existing);
 
