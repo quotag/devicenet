@@ -4,6 +4,7 @@ import { Bridge } from './bridge/bridge.js';
 import { buildStatus, primaryIpv4 } from './bridge/heartbeat.js';
 import { ClaimClient } from './claim/claimClient.js';
 import type { HubCredential } from './claim/credentials.js';
+import { evaluateSignInError } from './claim/tokenRefresh.js';
 import { runCli } from './cli.js';
 import { loadConfig } from './config/load.js';
 import { findRepoRoot, resolvePaths } from './config/paths.js';
@@ -190,20 +191,33 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
     }
   }
 
+  let unauthFailCount = 0;
+
   const signIn = (s: FirestoreConfigStore, delay = 5_000) => {
     s.connect().then(
-      () => log.info('Firestore signed in'),
+      () => {
+        unauthFailCount = 0;
+        log.info('Firestore signed in');
+      },
       (e) => {
         if (stopping || configStore !== s) return;
         const msg = (e as Error)?.message ?? '';
-        const status = (e as { status?: number })?.status;
-        log.warn({ err: msg, retryInMs: delay }, 'Firestore sign-in failed');
-        if (status === 401 || status === 404 || msg.includes('401') || msg.includes('404')) {
-          log.warn('Hub credentials invalid/revoked on cloud; unclaiming');
-          void goUnclaimed();
-          return;
+        const decision = evaluateSignInError(e, unauthFailCount, delay);
+        unauthFailCount = decision.consecutiveFailures;
+
+        if (decision.isUnauthenticated) {
+          log.warn({ unauthFailCount, status: (e as { status?: number })?.status, code: (e as { code?: string })?.code, err: msg }, 'Hub authentication rejected by cloud');
+          if (decision.shouldUnclaim) {
+            log.warn('Hub credentials invalid/revoked on cloud (3 consecutive unauthenticated rejections); unclaiming');
+            unauthFailCount = 0;
+            void goUnclaimed();
+            return;
+          }
+        } else {
+          log.warn({ err: msg, retryInMs: decision.retryDelayMs }, 'Firestore sign-in failed');
         }
-        signInTimer = setTimeout(() => signIn(s, Math.min(delay * 2, 60_000)), delay);
+
+        signInTimer = setTimeout(() => signIn(s, decision.retryDelayMs), decision.retryDelayMs);
       },
     );
   };

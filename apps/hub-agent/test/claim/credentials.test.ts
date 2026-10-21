@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readCredentials, updateToken, writeCredentials } from '../../src/claim/credentials.js';
-import { refreshHubToken, TokenRefreshError } from '../../src/claim/tokenRefresh.js';
+import { evaluateSignInError, refreshHubToken, TokenRefreshError } from '../../src/claim/tokenRefresh.js';
 import { runCli } from '../../src/cli.js';
 import { makeCredential, StubApi } from './helpers.js';
 
@@ -46,9 +46,53 @@ describe('token refresh (OQ-5)', () => {
     api = await new StubApi().start();
     const p = join(tmp(), 'credentials.json');
     writeCredentials(p, makeCredential(api.url, { mqtt: { host: 'h', port: 1, wssPort: 2, username: 'u', password: 'wrong' } }));
-    await expect(refreshHubToken({ credentialsPath: p })).rejects.toMatchObject({ name: 'TokenRefreshError', status: 401 });
+    await expect(refreshHubToken({ credentialsPath: p })).rejects.toMatchObject({ name: 'TokenRefreshError', status: 401, code: 'UNAUTHENTICATED' });
     expect(readCredentials(p)!.firebaseCustomToken).toBe('tok-1');
     await expect(refreshHubToken({ credentialsPath: join(tmp(), 'none.json') })).rejects.toBeInstanceOf(TokenRefreshError);
+  });
+
+  describe('evaluateSignInError (strict unclaim condition)', () => {
+    const unauthErr = new TokenRefreshError('token refresh HTTP 401', 401, 'UNAUTHENTICATED');
+    const notFoundErr = new TokenRefreshError('token refresh HTTP 404', 404, 'HUB_NOT_FOUND');
+    const netErr = new Error('connect ECONNREFUSED 127.0.0.1:443');
+    const serverErr = new TokenRefreshError('token refresh HTTP 502', 502);
+    const html404 = new TokenRefreshError('token refresh HTTP 404', 404);
+    const fake401Msg = new Error('request failed with status code 401 in proxy');
+
+    it('requires 3 consecutive unauthenticated errors before shouldUnclaim is true', () => {
+      // 1st time
+      const d1 = evaluateSignInError(unauthErr, 0);
+      expect(d1.isUnauthenticated).toBe(true);
+      expect(d1.consecutiveFailures).toBe(1);
+      expect(d1.shouldUnclaim).toBe(false);
+      expect(d1.retryDelayMs).toBe(30_000);
+
+      // 2nd time
+      const d2 = evaluateSignInError(unauthErr, d1.consecutiveFailures);
+      expect(d2.isUnauthenticated).toBe(true);
+      expect(d2.consecutiveFailures).toBe(2);
+      expect(d2.shouldUnclaim).toBe(false);
+
+      // 3rd time -> unclaim
+      const d3 = evaluateSignInError(unauthErr, d2.consecutiveFailures);
+      expect(d3.isUnauthenticated).toBe(true);
+      expect(d3.consecutiveFailures).toBe(3);
+      expect(d3.shouldUnclaim).toBe(true);
+    });
+
+    it('treats 404 HUB_NOT_FOUND as unauthenticated rejection', () => {
+      const d = evaluateSignInError(notFoundErr, 2);
+      expect(d.isUnauthenticated).toBe(true);
+      expect(d.shouldUnclaim).toBe(true);
+    });
+
+    it('never unclaims on network errors, 5xx, HTML 404, or string 401 matches', () => {
+      for (const err of [netErr, serverErr, html404, fake401Msg]) {
+        const d = evaluateSignInError(err, 2);
+        expect(d.isUnauthenticated).toBe(false);
+        expect(d.shouldUnclaim).toBe(false);
+      }
+    });
   });
 });
 
