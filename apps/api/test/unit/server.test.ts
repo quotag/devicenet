@@ -67,4 +67,63 @@ describe('server', () => {
     const r = await app.inject({ method: 'GET', url: '/healthz' });
     expect(r.headers['x-content-type-options']).toBe('nosniff');
   });
+
+  it('trustProxy extracts client IP from x-forwarded-for', async () => {
+    const testApp = await buildServer({
+      hostingOrigins: ['https://devicenet.web.app'],
+      config: {
+        nodeEnv: 'production',
+        isEmulator: false,
+        port: 8080,
+        host: '0.0.0.0',
+        projectId: 'test-p',
+        hostingOrigins: ['https://devicenet.web.app'],
+        apiBaseUrl: 'https://api.test',
+        mqttHost: 'mqtt.test',
+        mqttPort: 8883,
+        mqttWssPort: 8084,
+        emqxSharedToken: '12345678901234567890123456789012',
+        firebaseWebApiKey: 'fake',
+        trustProxy: true,
+      },
+    });
+    testApp.get('/test-ip', async (req) => ({ ip: req.ip }));
+    const r = await testApp.inject({
+      method: 'GET',
+      url: '/test-ip',
+      headers: { 'x-forwarded-for': '203.0.113.195, 10.0.0.1' },
+    });
+    expect(r.json()).toEqual({ ip: '203.0.113.195' });
+    await testApp.close();
+  });
+
+  it('CORS in production rejects localhost and allows hostingOrigins only', async () => {
+    const prodApp = await buildServer({
+      hostingOrigins: ['https://devicenet.web.app'],
+      config: {
+        nodeEnv: 'production',
+        isEmulator: false,
+        port: 8080,
+        host: '0.0.0.0',
+        projectId: 'test-p',
+        hostingOrigins: ['https://devicenet.web.app'],
+        apiBaseUrl: 'https://api.test',
+        mqttHost: 'mqtt.test',
+        mqttPort: 8883,
+        mqttWssPort: 8084,
+        emqxSharedToken: '12345678901234567890123456789012',
+        firebaseWebApiKey: 'fake',
+        trustProxy: true,
+      },
+    });
+    const checkOrigin = (origin: string) =>
+      prodApp
+        .inject({ method: 'GET', url: '/healthz', headers: { origin } })
+        .then((r) => r.headers['access-control-allow-origin']);
+
+    expect(await checkOrigin('http://localhost:5173')).toBeUndefined();
+    expect(await checkOrigin('https://devicenet.web.app')).toBe('https://devicenet.web.app');
+    expect(await checkOrigin('https://evil.example')).toBeUndefined();
+    await prodApp.close();
+  });
 });
