@@ -323,3 +323,20 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 1. Vào **GCP Console** > **Billing** > **Budgets & alerts**.
 2. Đặt ngân sách: **15 USD/tháng**.
 3. Cài đặt gửi thông báo qua email khi đạt 50%, 80% và 100%.
+
+---
+
+## 6. Mô hình bảo mật & Rủi ro chấp nhận được (Security & Trust Model)
+
+1. **Bảo vệ LAN Hub & CSRF:**
+   - Private IP Guard chặn các request từ ngoài internet vào server LAN của hub.
+   - Route `POST /setup/reset` được bảo vệ bằng:
+     - Chặn `Sec-Fetch-Site: cross-site` và `same-site`.
+     - So khớp header `Origin` với `Host` của Hub.
+     - Token CSRF ngẫu nhiên theo tiến trình sinh lúc khởi động (`timingSafeEqual`).
+     - Rate limit 3 lần / giờ.
+   - Các API LAN (`/api/config`, `/api/health`, `/api/events`, `/api/history`) hoàn toàn **không** để lộ token bí mật (`secret`, `customToken`, `password`).
+2. **Rủi ro chấp nhận được (Accepted Risk):**
+   - Bất kỳ ai có mặt trong cùng mạng LAN vật lý và truy cập được `http://<ip-hub>:8080/setup` đều có thể nhìn thấy mã claim của một Hub chưa liên kết (Unclaimed) để liên kết vào tài khoản của họ.
+   - Đây là mô hình tin cậy theo vị trí vật lý (Physical proximity trust model) tiêu chuẩn cho thiết bị phần cứng IoT gia đình khi mới mở hộp. Sau khi claim thành công, trang `/setup` khóa lại và chỉ hiển thị trạng thái đã liên kết.
+

@@ -1,3 +1,4 @@
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import QRCode from 'qrcode';
 import type { FastifyInstance } from 'fastify';
 import { S } from '../strings.vi.js';
@@ -5,8 +6,59 @@ import type { LanDeps } from '../server.js';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
+function isValidCsrf(token: unknown, expected: string): boolean {
+  if (typeof token !== 'string') return false;
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
 export function setupRoute(app: FastifyInstance, deps: LanDeps): void {
-  app.post('/setup/reset', async (_req, reply) => {
+  const csrfToken = deps.csrfToken ?? randomBytes(24).toString('hex');
+  const resetTimestamps: number[] = [];
+
+  app.post('/setup/reset', async (req, reply) => {
+    // 1. Check Sec-Fetch-Site (cross-site / same-site rejection)
+    const secFetchSite = req.headers['sec-fetch-site'];
+    if (secFetchSite === 'cross-site' || secFetchSite === 'same-site') {
+      return reply.code(403).send({ error: 'forbidden', message: 'Cross-site request blocked' });
+    }
+
+    // Check Origin vs Host if present
+    const origin = req.headers.origin;
+    if (origin) {
+      try {
+        const originUrl = new URL(origin);
+        const hostHeader = (req.headers['x-forwarded-host'] as string | undefined) ?? req.headers.host;
+        if (hostHeader && originUrl.host !== hostHeader) {
+          return reply.code(403).send({ error: 'forbidden', message: 'Cross-origin request blocked' });
+        }
+      } catch {
+        return reply.code(403).send({ error: 'forbidden', message: 'Invalid origin header' });
+      }
+    }
+
+    // 2. Validate CSRF token (header or form body)
+    const bodyCsrf = (req.body as { csrf?: string } | undefined)?.csrf;
+    const headerCsrf = req.headers['x-dn-csrf'] as string | undefined;
+    const submittedToken = headerCsrf ?? bodyCsrf;
+
+    if (!isValidCsrf(submittedToken, csrfToken)) {
+      return reply.code(403).send({ error: 'forbidden', message: 'CSRF token missing or invalid' });
+    }
+
+    // 3. Rate limit (3 resets per hour)
+    const now = (deps.now ?? Date.now)();
+    const oneHourAgo = now - 3600_000;
+    while (resetTimestamps.length > 0 && resetTimestamps[0]! <= oneHourAgo) {
+      resetTimestamps.shift();
+    }
+    if (resetTimestamps.length >= 3) {
+      return reply.code(429).send({ error: 'rate_limited', message: 'Quá nhiều yêu cầu đặt lại. Thử lại sau.' });
+    }
+    resetTimestamps.push(now);
+
     let ok = true;
     if (deps.resetClaim) {
       const res = await deps.resetClaim();
@@ -26,7 +78,7 @@ export function setupRoute(app: FastifyInstance, deps: LanDeps): void {
     let body: string;
     if (st.claimed) {
       const resetForm = deps.resetClaim
-        ? `<form method="POST" action="/setup/reset" onsubmit="return confirm('${esc(S.resetConfirm)}')"><button type="submit" class="btn-reset" id="reset-btn">${esc(S.resetButton)}</button></form>`
+        ? `<form method="POST" action="/setup/reset" onsubmit="return confirm('${esc(S.resetConfirm)}')"><input type="hidden" name="csrf" value="${esc(csrfToken)}"><button type="submit" class="btn-reset" id="reset-btn">${esc(S.resetButton)}</button></form>`
         : '';
       body = `${errorBanner}<p id="state">${S.claimed}</p>${resetForm}`;
     } else if (!st.code) {

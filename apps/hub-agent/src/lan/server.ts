@@ -44,6 +44,7 @@ export interface LanDeps {
   webDir: string;
   now?: () => number;
   resetClaim?: () => Promise<boolean | void>;
+  csrfToken?: string;
 }
 
 export interface LanServerOptions {
@@ -55,6 +56,14 @@ export interface LanServerOptions {
 
 export function buildLanApp(deps: LanDeps, opts: { allowPublic?: boolean } = {}): FastifyInstance {
   const app = Fastify({ logger: false });
+  app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (_req, body, done) => {
+    try {
+      const parsed = Object.fromEntries(new URLSearchParams(body as string));
+      done(null, parsed);
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  });
   if (!opts.allowPublic) {
     app.addHook('onRequest', async (req, reply) => {
       if (!isPrivateIp(req.ip)) return reply.code(403).send({ error: 'forbidden', message: S.forbidden });
