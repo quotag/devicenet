@@ -1,7 +1,12 @@
 # Cloud Run Service and Artifact Registry Configuration for DeviceNet API
 
+data "google_project" "current" {
+  project_id = var.gcp_project_id
+}
+
 locals {
   resolved_mqtt_domain = var.mqtt_domain != "" ? var.mqtt_domain : "${google_compute_address.emqx_ip.address}.sslip.io"
+  resolved_api_url     = var.api_base_url != "" ? var.api_base_url : "https://devicenet-api-${data.google_project.current.number}.${var.gcp_region}.run.app"
 }
 
 # Artifact Registry Repository for Docker images
@@ -42,6 +47,14 @@ resource "google_cloud_run_service" "api" {
         env {
           name  = "FIREBASE_WEB_API_KEY"
           value = var.firebase_web_api_key
+        }
+        env {
+          name  = "DN_API_BASE_URL"
+          value = local.resolved_api_url
+        }
+        env {
+          name  = "TRUST_PROXY"
+          value = "1"
         }
         env {
           name  = "DN_MQTT_HOST"
@@ -91,6 +104,17 @@ resource "google_cloud_run_service" "api" {
               key  = "latest"
             }
           }
+        }
+
+        startup_probe {
+          http_get {
+            path = "/healthz"
+            port = 8080
+          }
+          initial_delay_seconds = 0
+          timeout_seconds       = 3
+          period_seconds        = 5
+          failure_threshold     = 3
         }
 
         resources {
@@ -162,11 +186,23 @@ resource "google_service_account_iam_member" "run_sa_token_creator" {
   member             = "serviceAccount:${google_service_account.run_sa.email}"
 }
 
-# Secret Manager Access
-resource "google_project_iam_member" "run_sa_secretmanager" {
-  project = var.gcp_project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.run_sa.email}"
+# Scoped Secret Manager Access per secret
+resource "google_secret_manager_secret_iam_member" "run_sa_emqx_shared_token" {
+  secret_id = google_secret_manager_secret.emqx_shared_token.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "run_sa_emqx_admin_key" {
+  secret_id = google_secret_manager_secret.emqx_admin_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "run_sa_emqx_admin_secret" {
+  secret_id = google_secret_manager_secret.emqx_admin_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
 }
 
 output "api_service_url" {

@@ -98,13 +98,19 @@ export class FirestoreConfigSource implements ConfigSource {
     if (this.pendingColls.size === 0) this.d.resolve();
   }
 
+  private lastPermDeniedNotice = 0;
+
   private onError = (label: string) => (e: unknown) => {
     console.warn(`[config] ${label} listener error`, e);
     const code = (e as { code?: string })?.code;
     if (code === "permission-denied") {
-      void import("@/stores/toast").then(({ toastStore }) => {
-        toastStore.getState().show({ kind: "error", text: "Hub hoặc quyền truy cập không còn hiệu lực." });
-      });
+      const now = Date.now();
+      if (now - this.lastPermDeniedNotice > 10_000) {
+        this.lastPermDeniedNotice = now;
+        void import("@/stores/toast").then(({ toastStore }) => {
+          toastStore.getState().show({ kind: "error", text: "Hub hoặc quyền truy cập không còn hiệu lực." });
+        });
+      }
     }
   };
 

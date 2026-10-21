@@ -23,7 +23,12 @@ resource "google_compute_instance" "emqx_vm" {
   metadata_startup_script = file("${path.module}/../vm/startup.sh")
 
   metadata = {
-    enable-oslogin = "true"
+    enable-oslogin      = "true"
+    api-url             = local.resolved_api_url
+    mqtt-domain         = local.resolved_mqtt_domain
+    firebase-project-id = var.firebase_project_id
+    caddyfile           = file("${path.module}/../vm/Caddyfile")
+    emqx-conf-template  = file("${path.module}/../emqx/emqx.conf.template")
   }
 
   service_account {
@@ -56,10 +61,23 @@ resource "google_project_iam_member" "vm_sa_metric_writer" {
   member  = "serviceAccount:${google_service_account.vm_sa.email}"
 }
 
-resource "google_project_iam_member" "vm_sa_secret_accessor" {
-  project = var.gcp_project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.vm_sa.email}"
+# Scoped Secret Manager Access per secret needed by VM
+resource "google_secret_manager_secret_iam_member" "vm_sa_emqx_shared_token" {
+  secret_id = google_secret_manager_secret.emqx_shared_token.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.vm_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "vm_sa_dashboard_password" {
+  secret_id = google_secret_manager_secret.emqx_dashboard_password.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.vm_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "vm_sa_firebase_project_id" {
+  secret_id = google_secret_manager_secret.firebase_project_id.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.vm_sa.email}"
 }
 
 output "vm_external_ip" {

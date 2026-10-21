@@ -8,7 +8,7 @@ export async function kickClient(
   log?: { warn: (o: unknown, m?: string) => void },
 ): Promise<boolean> {
   const cfg = getConfig();
-  const base = process.env.EMQX_ADMIN_URL ?? cfg.emqxAdminUrl;
+  const base = cfg.emqxAdminUrl ?? process.env.EMQX_ADMIN_URL;
   if (!base) {
     if (!warnedMissingConfig) {
       warnedMissingConfig = true;
@@ -17,10 +17,10 @@ export async function kickClient(
     return false;
   }
   try {
-    const key = process.env.EMQX_ADMIN_KEY ?? cfg.emqxAdminKey;
-    const secret = process.env.EMQX_ADMIN_SECRET ?? cfg.emqxAdminSecret;
+    const key = cfg.emqxAdminKey ?? process.env.EMQX_ADMIN_KEY;
+    const secret = cfg.emqxAdminSecret ?? process.env.EMQX_ADMIN_SECRET;
     const headers: Record<string, string> = {
-      'x-dn-token': process.env.EMQX_SHARED_TOKEN ?? cfg.emqxSharedToken,
+      'x-dn-token': cfg.emqxSharedToken ?? process.env.EMQX_SHARED_TOKEN ?? '',
     };
     if (key && secret) headers.authorization = `Basic ${Buffer.from(`${key}:${secret}`).toString('base64')}`;
     else if (key) headers.authorization = `Bearer ${key}`;

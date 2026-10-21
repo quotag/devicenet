@@ -13,7 +13,7 @@
   }
 
   handle @kick {
-    reverse_proxy emqx:18083
+    reverse_proxy 127.0.0.1:18083
   }
 
   handle /healthz {

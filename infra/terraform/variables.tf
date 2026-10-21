@@ -5,8 +5,8 @@ variable "gcp_project_id" {
 
 variable "gcp_region" {
   type        = string
-  default     = "asia-southeast1"
-  description = "GCP Region for Cloud Run, Compute Engine, and Artifact Registry"
+  default     = "us-central1"
+  description = "GCP Region for Cloud Run, Compute Engine, and Artifact Registry (us-central1 is eligible for Always Free VM)"
 }
 
 variable "firebase_project_id" {
@@ -45,8 +45,8 @@ variable "api_max_instances" {
 
 variable "vm_machine_type" {
   type        = string
-  default     = "e2-small"
-  description = "GCE machine type for EMQX. e2-small (2GB RAM) is strongly recommended; e2-micro (1GB RAM) requires swap"
+  default     = "e2-micro"
+  description = "GCE machine type for EMQX. e2-micro (1GB RAM + 2GB swap) is eligible for GCP Always Free tier"
 }
 
 variable "vm_image" {
@@ -59,4 +59,10 @@ variable "vm_network" {
   type        = string
   default     = "default"
   description = "VPC network name"
+}
+
+variable "api_base_url" {
+  type        = string
+  default     = ""
+  description = "Explicit base URL for the Cloud Run API (e.g. custom domain or known URL). If left blank, defaults to https://devicenet-api-<project_number>.<region>.run.app"
 }

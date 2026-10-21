@@ -27,8 +27,19 @@ describe('loadConfig', () => {
     expect(cfg.mqttPort).toBe(8883);
     expect(cfg.mqttWssPort).toBe(8084);
     expect(cfg.emqxSharedToken).toBe('12345678901234567890123456789012');
-    expect(cfg.firebaseWebApiKey).toBe('AIzaSyA_fake_prod_api_key_123456789');
-    expect(cfg.trustProxy).toBe(true);
+    expect(typeof cfg.trustProxy).toBe('function');
+    const tp = cfg.trustProxy as (a: string, h: number) => boolean;
+    expect(tp('10.0.0.1', 1)).toBe(true);
+    expect(tp('10.0.0.1', 2)).toBe(false);
+  });
+
+  it('rejects production mode when DN_EMULATOR is 1', () => {
+    expect(() =>
+      loadConfig({
+        ...validProdEnv,
+        DN_EMULATOR: '1',
+      }),
+    ).toThrow(/emulator hosts or DN_EMULATOR=1/i);
   });
 
   it('rejects production mode when FIRESTORE_EMULATOR_HOST is set', () => {
@@ -37,7 +48,7 @@ describe('loadConfig', () => {
         ...validProdEnv,
         FIRESTORE_EMULATOR_HOST: '127.0.0.1:8085',
       }),
-    ).toThrow(/emulator hosts/i);
+    ).toThrow(/emulator hosts or DN_EMULATOR=1/i);
   });
 
   it('rejects production mode when FIREBASE_AUTH_EMULATOR_HOST is set', () => {
@@ -46,7 +57,7 @@ describe('loadConfig', () => {
         ...validProdEnv,
         FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
       }),
-    ).toThrow(/emulator hosts/i);
+    ).toThrow(/emulator hosts or DN_EMULATOR=1/i);
   });
 
   it('provides dev defaults when FIRESTORE_EMULATOR_HOST is set in dev mode', () => {
@@ -127,5 +138,29 @@ describe('loadConfig', () => {
     const env = { ...validProdEnv };
     delete env.FIREBASE_WEB_API_KEY;
     expect(() => loadConfig(env)).toThrow(/FIREBASE_WEB_API_KEY/);
+  });
+
+  it('unpacks secrets from DEVICENET_SECRETS JSON string', () => {
+    const env = { ...validProdEnv };
+    delete env.EMQX_SHARED_TOKEN;
+    env.DEVICENET_SECRETS = JSON.stringify({
+      EMQX_SHARED_TOKEN: 'token_from_json_secret_12345678901234',
+      EMQX_ADMIN_KEY: 'admin_key_123',
+      EMQX_ADMIN_SECRET: 'admin_secret_456',
+    });
+
+    const cfg = loadConfig(env);
+    expect(cfg.emqxSharedToken).toBe('token_from_json_secret_12345678901234');
+    expect(cfg.emqxAdminKey).toBe('admin_key_123');
+    expect(cfg.emqxAdminSecret).toBe('admin_secret_456');
+  });
+
+  it('throws when DEVICENET_SECRETS contains invalid JSON', () => {
+    expect(() =>
+      loadConfig({
+        ...validProdEnv,
+        DEVICENET_SECRETS: 'not-valid-json',
+      }),
+    ).toThrow(/Failed to parse DEVICENET_SECRETS JSON/);
   });
 });

@@ -4,7 +4,23 @@ import type { FastifyInstance } from 'fastify';
 import { S } from '../strings.vi.js';
 import type { LanDeps } from '../server.js';
 
+import os from 'node:os';
+import { isPrivateIp } from '../privateIpGuard.js';
+
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+export function isAllowedHost(hostHeader: string | undefined): boolean {
+  if (!hostHeader) return false;
+  const host = hostHeader.replace(/:\d+$/, '').trim().toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]') return true;
+  if (host.endsWith('.local')) return true;
+  if (isPrivateIp(host)) return true;
+  try {
+    const osHostname = os.hostname().toLowerCase();
+    if (host === osHostname) return true;
+  } catch {}
+  return false;
+}
 
 function isValidCsrf(token: unknown, expected: string): boolean {
   if (typeof token !== 'string') return false;
@@ -25,13 +41,18 @@ export function setupRoute(app: FastifyInstance, deps: LanDeps): void {
       return reply.code(403).send({ error: 'forbidden', message: 'Cross-site request blocked' });
     }
 
+    // 2. Validate Host header against DNS rebinding
+    const hostHeader = (req.headers['x-forwarded-host'] as string | undefined) ?? req.headers.host;
+    if (!isAllowedHost(hostHeader)) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Disallowed host header' });
+    }
+
     // Check Origin vs Host if present
     const origin = req.headers.origin;
     if (origin) {
       try {
         const originUrl = new URL(origin);
-        const hostHeader = (req.headers['x-forwarded-host'] as string | undefined) ?? req.headers.host;
-        if (hostHeader && originUrl.host !== hostHeader) {
+        if (!isAllowedHost(originUrl.hostname) || (hostHeader && originUrl.host !== hostHeader)) {
           return reply.code(403).send({ error: 'forbidden', message: 'Cross-origin request blocked' });
         }
       } catch {

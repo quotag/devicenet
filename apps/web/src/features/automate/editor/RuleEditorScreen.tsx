@@ -17,6 +17,7 @@ import { EditorFooter } from "./EditorFooter";
 import { BlockRow, RuleBlock } from "./RuleBlock";
 import { RuleEditorDesktop, previewOf } from "./RuleEditorDesktop";
 import { TriggerSheet } from "./TriggerSheet";
+import { isConflictError } from "@/lib/firestoreErrors";
 import { saveDraft, type SaveDeps } from "./save";
 import {
   actionToWire,
@@ -108,10 +109,7 @@ export function RuleEditorScreen({ target, onClose, saveDeps }: RuleEditorScreen
       onClose();
     } catch (err: unknown) {
       setSaving("idle");
-      const isConflict =
-        (err as { code?: string })?.code === "failed-precondition" ||
-        (err as { code?: string })?.code === "permission-denied" ||
-        (err as { message?: string })?.message?.includes("rev");
+      const isConflict = isConflictError(err);
       const text = isConflict
         ? "Dữ liệu đã thay đổi trên hệ thống. Vui lòng tải lại và thử lại."
         : t.saveFail;

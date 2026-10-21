@@ -9,7 +9,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "@parcel/watcher"
+      "@parcel/watcher",
+      "better-sqlite3",
+      "@serialport/bindings-cpp"
     ]
   },
   "scripts": {

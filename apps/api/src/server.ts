@@ -45,7 +45,7 @@ export async function buildServer(opts: ServerOptions = {}): Promise<FastifyInst
 
   const app = Fastify({
     logger: loggerOpt,
-    trustProxy: cfg.trustProxy ?? true,
+    trustProxy: cfg.trustProxy ?? ((_addr: string, hop: number) => hop <= 1),
   });
   const hosting = opts.hostingOrigins ?? cfg.hostingOrigins;
   const allowLocalhost = cfg.isEmulator || cfg.nodeEnv === 'test';

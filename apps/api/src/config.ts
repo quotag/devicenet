@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 export interface ApiConfig {
   nodeEnv: string;
   isEmulator: boolean;
@@ -16,7 +14,7 @@ export interface ApiConfig {
   emqxAdminUrl?: string;
   emqxAdminKey?: string;
   emqxAdminSecret?: string;
-  trustProxy?: boolean | string;
+  trustProxy?: boolean | string | string[] | ((address: string, hop: number) => boolean);
 }
 
 let activeConfig: ApiConfig | null = null;
@@ -48,13 +46,25 @@ function isHttpsUrl(u: string): boolean {
   }
 }
 
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
+export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): ApiConfig {
+  let env = { ...rawEnv };
+  if (env.DEVICENET_SECRETS && env.DEVICENET_SECRETS.trim()) {
+    try {
+      const parsed = JSON.parse(env.DEVICENET_SECRETS);
+      if (parsed && typeof parsed === 'object') {
+        env = { ...parsed, ...env };
+      }
+    } catch (e) {
+      throw new Error(`Failed to parse DEVICENET_SECRETS JSON: ${(e as Error).message}`);
+    }
+  }
+
   const nodeEnv = env.NODE_ENV ?? 'development';
   const hasFirestoreEmulator = Boolean(env.FIRESTORE_EMULATOR_HOST && env.FIRESTORE_EMULATOR_HOST.trim());
   const hasAuthEmulator = Boolean(env.FIREBASE_AUTH_EMULATOR_HOST && env.FIREBASE_AUTH_EMULATOR_HOST.trim());
 
-  if (nodeEnv === 'production' && (hasFirestoreEmulator || hasAuthEmulator)) {
-    throw new Error('Production mode cannot be run with emulator hosts (FIRESTORE_EMULATOR_HOST or FIREBASE_AUTH_EMULATOR_HOST)');
+  if (nodeEnv === 'production' && (hasFirestoreEmulator || hasAuthEmulator || env.DN_EMULATOR === '1')) {
+    throw new Error('Production mode cannot be run with emulator hosts or DN_EMULATOR=1');
   }
 
   const isEmulator = hasFirestoreEmulator || env.DN_EMULATOR === '1';
@@ -174,6 +184,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     emqxAdminUrl: env.EMQX_ADMIN_URL,
     emqxAdminKey: env.EMQX_ADMIN_KEY,
     emqxAdminSecret: env.EMQX_ADMIN_SECRET,
-    trustProxy: env.TRUST_PROXY === 'false' ? false : true, // default true in prod Cloud Run
+    trustProxy: env.TRUST_PROXY === 'false' ? false : env.TRUST_PROXY === 'true' ? true : (_addr: string, hop: number) => hop <= 1, // default 1 hop (Cloud Run GFE single proxy hop)
   };
 }

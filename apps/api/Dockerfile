@@ -8,18 +8,14 @@ COPY apps/api ./apps/api
 RUN pnpm install --frozen-lockfile --filter @devicenet/api... \
  && pnpm --filter @devicenet/shared build \
  && pnpm --filter @devicenet/api build \
- && pnpm prune --prod
+ && pnpm --filter=@devicenet/api deploy --legacy --prod /out \
+ && cp -r apps/api/dist /out/dist
 
 FROM node:22-slim
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8080
-WORKDIR /repo
-COPY --from=build --chown=node:node /repo/node_modules ./node_modules
-COPY --from=build --chown=node:node /repo/packages/shared ./packages/shared
-COPY --from=build --chown=node:node /repo/apps/api/dist ./apps/api/dist
-COPY --from=build --chown=node:node /repo/apps/api/package.json ./apps/api/package.json
-COPY --from=build --chown=node:node /repo/package.json ./package.json
+WORKDIR /app
+COPY --from=build --chown=node:node /out ./
 
-WORKDIR /repo/apps/api
 USER node
 EXPOSE 8080
 CMD ["node", "dist/main.js"]

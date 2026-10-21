@@ -28,29 +28,6 @@ interface UserTenantDoc {
   createdAt: number;
 }
 
-export async function findExistingTenant(uid: string): Promise<{ tenantId: string; siteId: string } | null> {
-  // Check userTenants collection first (server-only mapping doc)
-  const utDoc = await db().doc(`userTenants/${uid}`).get();
-  if (utDoc.exists) {
-    const data = utDoc.data() as UserTenantDoc;
-    return { tenantId: data.tenantId, siteId: data.siteId };
-  }
-
-  // Fallback if tenantId exists on claims but not in userTenants (e.g. legacy/migrated)
-  const user = await auth().getUser(uid);
-  const tenantId = user.customClaims?.tenant as string | undefined;
-  if (tenantId) {
-    const sites = await db().collection(`tenants/${tenantId}/sites`).orderBy('order').limit(1).get();
-    const siteId = sites.docs[0]?.id;
-    if (siteId) {
-      await db().doc(`userTenants/${uid}`).set({ tenantId, siteId, createdAt: Date.now() });
-      return { tenantId, siteId };
-    }
-  }
-
-  return null;
-}
-
 export async function tenantsRoutes(app: FastifyInstance) {
   app.post('/v1/tenants/bootstrap', { preHandler: firebaseAuth }, async (req, reply) => {
     const body = Body.safeParse(req.body ?? {});

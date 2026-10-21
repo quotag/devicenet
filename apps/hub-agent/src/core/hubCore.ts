@@ -194,8 +194,7 @@ export function createHubCore(o: HubCoreOptions): HubCore {
       if (id) {
         for (const e of registry.all()) {
           if (e.device.hubId !== id.hubId || e.device.siteId !== id.siteId) {
-            registry.updateDevice(e.device.id, { hubId: id.hubId, siteId: id.siteId, status: 'new' });
-            registry.markSynced(e.device.id, false);
+            registry.delete(e.device.id);
           }
         }
         lifecycle.recover().catch((err) => o.log?.warn({ err: (err as Error)?.message }, 'recovery'));

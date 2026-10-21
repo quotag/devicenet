@@ -22,7 +22,12 @@ command -v docker >/dev/null 2>&1 || { [ "$DRY" = 1 ] && echo "[dry-run] docker 
 
 # 1. Dedicated user (member of docker + dialout)
 if ! id devicenet >/dev/null 2>&1; then act useradd --system --create-home --home-dir "$DIR" --shell /usr/sbin/nologin devicenet; fi
-for g in docker dialout; do getent group "$g" >/dev/null 2>&1 && act usermod -aG "$g" devicenet || true; done
+if getent group docker >/dev/null 2>&1; then act usermod -aG docker devicenet; fi
+if getent group dialout >/dev/null 2>&1; then
+  act usermod -aG dialout devicenet
+else
+  echo "WARNING: group 'dialout' not found; ensure devicenet user has read/write permission to serial USB devices ($DEVICE)" >&2
+fi
 
 # 2. Zigbee dongle: stable /dev/serial/by-id path (Sonoff: Silicon_Labs_CP210x / ZBDongle; CH9102: 1a86)
 if [ -z "$DEVICE" ]; then

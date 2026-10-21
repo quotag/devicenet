@@ -125,30 +125,39 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
 
   let stopping = false;
   let signInTimer: NodeJS.Timeout | undefined;
+  let unclaimInFlight: Promise<void> | null = null;
 
   const goUnclaimed = async () => {
-    log.info('Hub unclaiming / resetting credentials');
-    if (signInTimer) {
-      clearTimeout(signInTimer);
-      signInTimer = undefined;
-    }
-    core.automation.sync.detach();
-    reconciler?.stop();
-    reconciler = null;
-    await configStore?.close().catch(() => {});
-    configStore = null;
-    await bridge.disconnectCloud().catch(() => {});
+    if (unclaimInFlight) return unclaimInFlight;
+    unclaimInFlight = (async () => {
+      try {
+        log.info('Hub unclaiming / resetting credentials');
+        if (signInTimer) {
+          clearTimeout(signInTimer);
+          signInTimer = undefined;
+        }
+        core.automation.sync.detach();
+        reconciler?.stop();
+        reconciler = null;
+        await configStore?.close().catch(() => {});
+        configStore = null;
+        await bridge.disconnectCloud().catch(() => {});
 
-    // Clear retained state on local broker, clean registry and local database tables
-    for (const entry of core.registry.all()) {
-      core.publisher.clearState(entry.device.id);
-    }
-    core.registry.clear();
-    store.resetForUnclaim();
+        // Clear retained state on local broker, clean registry and local database tables
+        for (const entry of core.registry.all()) {
+          core.publisher.clearState(entry.device.id);
+        }
+        core.registry.clear();
+        store.resetForUnclaim();
 
-    core.setIdentity(null);
-    bridge.identityChanged();
-    await claim.reset();
+        core.setIdentity(null);
+        bridge.identityChanged();
+        await claim.reset();
+      } finally {
+        unclaimInFlight = null;
+      }
+    })();
+    return unclaimInFlight;
   };
 
   let lan: Awaited<ReturnType<typeof startLanServer>> | null = null;
