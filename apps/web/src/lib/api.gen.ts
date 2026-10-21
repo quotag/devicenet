@@ -276,7 +276,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Remove hub — revoke MQTT secret, kick EMQX session, mark devices removed, rules broken. */
+        /** Remove hub — revoke MQTT secret, kick EMQX session, hard-delete devices, mark rules broken. */
         delete: {
             parameters: {
                 query?: never;
@@ -297,6 +297,56 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hubs/{hubId}/unclaim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hub self-unclaim — revoke MQTT secret, kick EMQX session, hard-delete devices, mark rules broken. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    hubId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Unclaimed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;

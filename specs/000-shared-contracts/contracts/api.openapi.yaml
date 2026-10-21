@@ -134,10 +134,20 @@ paths:
   /v1/hubs/{hubId}:
     delete:
       tags: [hubs]
-      summary: Remove hub — revoke MQTT secret, kick EMQX session, mark devices removed, rules broken.
+      summary: Remove hub — revoke MQTT secret, kick EMQX session, hard-delete devices, mark rules broken.
       security: [{ firebase: [] }]
       parameters: [{ name: hubId, in: path, required: true, schema: { type: string } }]
       responses: { "204": { description: Removed } }
+  /v1/hubs/{hubId}/unclaim:
+    post:
+      tags: [hubs]
+      summary: Hub self-unclaim — revoke MQTT secret, kick EMQX session, hard-delete devices, mark rules broken.
+      security: [{ hubSecret: [] }]
+      parameters: [{ name: hubId, in: path, required: true, schema: { type: string } }]
+      responses:
+        "204": { description: Unclaimed }
+        "401": { description: Unauthenticated }
+        "403": { description: Forbidden }
   /v1/hubs/{hubId}/token:
     post:
       tags: [hubs]
