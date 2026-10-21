@@ -4,6 +4,7 @@
     "indexes": "infra/firestore.indexes.json"
   },
   "hosting": {
+    "target": "devicenet",
     "public": "apps/web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/agent/*.zip", "**/agent/*.zip.sha256"],
     "rewrites": [

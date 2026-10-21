@@ -2,5 +2,15 @@
   "projects": {
     "default": "assistantpc-e0052",
     "prod": "assistantpc-e0052"
-  }
+  },
+  "targets": {
+    "assistantpc-e0052": {
+      "hosting": {
+        "devicenet": [
+          "devicenet"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
