@@ -11,4 +11,5 @@ export const S = {
   webNotBuilt: 'LAN web chưa build',
   webNotBuiltHint: 'Chạy build LAN của apps/web để có giao diện tại đây.',
   forbidden: 'Chỉ truy cập được từ mạng nội bộ.',
+  cloudUnclaimFailed: 'Hub cũ trên cloud chưa được gỡ — vui lòng vào app để xóa hub.',
 } as const;

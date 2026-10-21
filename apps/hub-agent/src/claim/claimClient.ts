@@ -111,6 +111,31 @@ export class ClaimClient extends EventEmitter<ClaimClientEvents> {
   }
 
   /**
+   * Best-effort notification to Cloud API that this hub is unclaiming.
+   * Calls POST {apiBaseUrl}/v1/hubs/:hubId/unclaim with Authorization: Hub <hubId>:<secret>.
+   * Timeout 5s, errors logged. Returns true if call succeeds or no credential was present, false otherwise.
+   */
+  async unclaimCloud(cred?: HubCredential | null): Promise<boolean> {
+    const c = cred ?? this.credential;
+    const secret = c?.mqtt?.password;
+    if (!c || !c.hubId || !secret) return true;
+    try {
+      const res = await this.http({
+        method: 'POST',
+        url: `${this.o.apiBaseUrl}/v1/hubs/${c.hubId}/unclaim`,
+        headers: {
+          authorization: `Hub ${c.hubId}:${secret}`,
+        },
+        timeoutMs: 5_000,
+      });
+      return res.status === 200 || res.status === 204;
+    } catch (e) {
+      this.o.log.warn({ err: (e as Error).message }, 'Failed to notify cloud of unclaim');
+      return false;
+    }
+  }
+
+  /**
    * Reset claim state: deletes credentials.json, stops active timers,
    * transitions to 'requesting' and requests a new claim code.
    */

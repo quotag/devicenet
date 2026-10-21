@@ -77,6 +77,20 @@ describe('LAN server', () => {
     expect(rPost.statusCode).toBe(303);
     expect(rPost.headers.location).toBe('/setup');
     expect(resetCalled).toBe(true);
+
+    // When resetClaim returns false (cloud unclaim failed)
+    const { app: a3 } = mk({
+      getClaim: () => ({ claimed: false, code: 'XYZ12345' }),
+      resetClaim: async () => false,
+    });
+    const rPostFailed = await a3.inject({ method: 'POST', url: '/setup/reset' });
+    expect(rPostFailed.statusCode).toBe(303);
+    expect(rPostFailed.headers.location).toBe('/setup?cloudError=1');
+
+    const rWarning = await a3.inject('/setup?cloudError=1');
+    expect(rWarning.statusCode).toBe(200);
+    expect(rWarning.body).toContain('id="cloud-warning"');
+    expect(rWarning.body).toContain('Hub cũ trên cloud chưa được gỡ');
   });
 
   it('static: missing dir shows notice; built dir serves files + SPA fallback', async () => {

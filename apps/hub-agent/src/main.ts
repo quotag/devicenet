@@ -167,7 +167,15 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
             ...(supHealth.lastError ? { lastError: supHealth.lastError } : {}),
           }),
           getClaim: () => claim.current(),
-          resetClaim: () => goUnclaimed(),
+          resetClaim: async () => {
+            const cred = claim.getCredential();
+            let cloudOk = true;
+            if (cred) {
+              cloudOk = await claim.unclaimCloud(cred);
+            }
+            await goUnclaimed();
+            return cloudOk;
+          },
           getIdentity: () => core.publisher.getIdentity(),
           snapshot: store.snapshot,
           history: store.history,

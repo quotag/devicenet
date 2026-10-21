@@ -173,4 +173,30 @@ describe('ClaimClient timing (fake time)', () => {
     expect(posts[1]!.at - 1_000_000).toBe(15 * 60_000);
     expect(client.current().code).toBe('ZZZZZZZZ');
   });
+
+  it('unclaimCloud notifies api with Hub auth header or returns false on failure', async () => {
+    let unclaimReq: JsonRequest | undefined;
+    let shouldFail = false;
+    const http: HttpJson = async (req) => {
+      if (req.url.endsWith('/unclaim')) {
+        unclaimReq = req;
+        if (shouldFail) throw new Error('network down');
+        return { status: 204, body: undefined };
+      }
+      return { status: 404, body: undefined };
+    };
+    const { client } = mk({ http });
+    const cred = makeCredential('http://fake');
+    // Success case
+    const ok = await client.unclaimCloud(cred);
+    expect(ok).toBe(true);
+    expect(unclaimReq?.method).toBe('POST');
+    expect(unclaimReq?.url).toContain(`/v1/hubs/${cred.hubId}/unclaim`);
+    expect(unclaimReq?.headers?.authorization).toBe(`Hub ${cred.hubId}:${cred.mqtt.password}`);
+
+    // Failure case
+    shouldFail = true;
+    const failed = await client.unclaimCloud(cred);
+    expect(failed).toBe(false);
+  });
 });
