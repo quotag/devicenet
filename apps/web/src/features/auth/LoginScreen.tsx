@@ -4,6 +4,24 @@ import { vi } from "@/i18n/vi";
 import { toastStore } from "@/stores";
 import { signIn } from "./session";
 
+export function authErrorMessage(code?: string): string {
+  switch (code) {
+    case "auth/popup-blocked":
+      return "Trình duyệt đã chặn cửa sổ đăng nhập. Đang chuyển hướng...";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Đã đóng cửa sổ đăng nhập.";
+    case "auth/unauthorized-domain":
+      return "Tên miền hiện tại chưa được cấp quyền (Authorized domains) trong Firebase Console.";
+    case "auth/network-request-failed":
+      return "Lỗi kết nối mạng, vui lòng kiểm tra lại đường truyền.";
+    case "auth/account-exists-with-different-credential":
+      return "Email này đã được liên kết với một phương thức đăng nhập khác.";
+    default:
+      return code ? `${vi.s00.error} (${code})` : vi.s00.error;
+  }
+}
+
 /** S-00 per `design/Main.dc.html`: logo block, title, tagline, Google button (loading), terms. */
 export function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -17,7 +35,7 @@ export function LoginScreen() {
         return;
       }
       console.warn("[auth] sign-in failed", e);
-      const text = code ? `${vi.s00.error} (${code})` : vi.s00.error;
+      const text = authErrorMessage(code);
       toastStore.getState().show({ kind: "error", text });
     } finally {
       setLoading(false);

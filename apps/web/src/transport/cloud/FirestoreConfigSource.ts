@@ -98,7 +98,15 @@ export class FirestoreConfigSource implements ConfigSource {
     if (this.pendingColls.size === 0) this.d.resolve();
   }
 
-  private onError = (label: string) => (e: unknown) => console.warn(`[config] ${label} listener error`, e);
+  private onError = (label: string) => (e: unknown) => {
+    console.warn(`[config] ${label} listener error`, e);
+    const code = (e as { code?: string })?.code;
+    if (code === "permission-denied") {
+      void import("@/stores/toast").then(({ toastStore }) => {
+        toastStore.getState().show({ kind: "error", text: "Hub hoặc quyền truy cập không còn hiệu lực." });
+      });
+    }
+  };
 
   private subscribe(a: SnapshotAdapter, tenantId: string, gen: number): void {
     const withId = (docs: RawDoc[]) => docs.map((d) => ({ id: d.id, ...d.data }));

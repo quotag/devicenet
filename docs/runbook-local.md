@@ -2,7 +2,7 @@
 
 Mục tiêu: sáng mai bật toàn bộ hệ thống trên 1 máy, đăng nhập web, liên kết hub, ghép ổ cắm TS011F và bật/tắt nó từ màn Home.
 
-Mọi lệnh chạy ở thư mục gốc repo (`C:\Users\ptm9hc\Documents\devicenet`), PowerShell hoặc Git Bash.
+Mọi lệnh chạy ở thư mục gốc repo (`<thư mục repo>`), PowerShell hoặc Git Bash.
 
 ## 0. Bảng địa chỉ
 

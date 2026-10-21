@@ -82,6 +82,12 @@ try {
   }
 
   if (!args.has('--no-emulators')) {
+    const javaCheck = spawnSync('java', ['-version'], { encoding: 'utf8' });
+    if (javaCheck.error || javaCheck.status !== 0) {
+      log('ERROR: Java is required to run Firebase emulators (auth, firestore). Please install Java (JRE/JDK >= 11).');
+      log('If emulators are already running elsewhere, rerun with --no-emulators.');
+      process.exit(1);
+    }
     await step('emulators', EMU.firestore, () => emulatorsProc(), 180_000);
     await waitTcp(EMU.auth, { name: 'auth emulator', timeoutMs: 30_000 });
     log(`Emulator UI: http://127.0.0.1:${EMU.ui}`);

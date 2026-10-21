@@ -106,9 +106,16 @@ export function RuleEditorScreen({ target, onClose, saveDeps }: RuleEditorScreen
       dispatch({ type: "markSaved", rev: r.rev });
       setSaving("syncing");
       onClose();
-    } catch {
+    } catch (err: unknown) {
       setSaving("idle");
-      toastStore.getState().show({ kind: "error", text: t.saveFail });
+      const isConflict =
+        (err as { code?: string })?.code === "failed-precondition" ||
+        (err as { code?: string })?.code === "permission-denied" ||
+        (err as { message?: string })?.message?.includes("rev");
+      const text = isConflict
+        ? "Dữ liệu đã thay đổi trên hệ thống. Vui lòng tải lại và thử lại."
+        : t.saveFail;
+      toastStore.getState().show({ kind: "error", text });
     }
   };
 

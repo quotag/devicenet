@@ -4,7 +4,13 @@
   "type": "module",
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher"
+    ]
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
