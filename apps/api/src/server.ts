@@ -24,8 +24,27 @@ export interface ServerOptions {
 
 export async function buildServer(opts: ServerOptions = {}): Promise<FastifyInstance> {
   const cfg = opts.config ?? getConfig();
+  const loggerOpt =
+    opts.logger === true
+      ? {
+          level: process.env.LOG_LEVEL || 'info',
+          redact: [
+            'req.headers.authorization',
+            'req.headers["x-emqx-token"]',
+            'req.headers["x-dn-token"]',
+            'req.headers.cookie',
+            'password',
+            'secret',
+            'customToken',
+            '*.password',
+            '*.secret',
+            '*.customToken',
+          ],
+        }
+      : (opts.logger ?? false);
+
   const app = Fastify({
-    logger: opts.logger ?? false,
+    logger: loggerOpt,
     trustProxy: cfg.trustProxy ?? true,
   });
   const hosting = opts.hostingOrigins ?? cfg.hostingOrigins;
