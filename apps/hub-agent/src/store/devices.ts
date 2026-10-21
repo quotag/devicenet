@@ -28,23 +28,28 @@ export class DevicesRepo {
 
   /** insert or replace by id */
   upsert(row: DeviceRow): void {
-    this.db
-      .prepare(
-        `INSERT INTO devices (id, external_id, doc, "values", at, online, last_seen, synced)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET external_id = excluded.external_id, doc = excluded.doc, "values" = excluded."values",
-           at = excluded.at, online = excluded.online, last_seen = excluded.last_seen, synced = excluded.synced`,
-      )
-      .run(
-        row.id,
-        row.externalId,
-        JSON.stringify(row.doc),
-        JSON.stringify(row.values),
-        JSON.stringify(row.at),
-        row.online ? 1 : 0,
-        row.lastSeen,
-        row.synced ? 1 : 0,
-      );
+    this.db.tx(() => {
+      this.db
+        .prepare("DELETE FROM devices WHERE external_id = ? AND id != ? AND json_extract(doc, '$.status') = 'removed'")
+        .run(row.externalId, row.id);
+      this.db
+        .prepare(
+          `INSERT INTO devices (id, external_id, doc, "values", at, online, last_seen, synced)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET external_id = excluded.external_id, doc = excluded.doc, "values" = excluded."values",
+             at = excluded.at, online = excluded.online, last_seen = excluded.last_seen, synced = excluded.synced`,
+        )
+        .run(
+          row.id,
+          row.externalId,
+          JSON.stringify(row.doc),
+          JSON.stringify(row.values),
+          JSON.stringify(row.at),
+          row.online ? 1 : 0,
+          row.lastSeen,
+          row.synced ? 1 : 0,
+        );
+    });
   }
 
   get(id: string): DeviceRow | undefined {

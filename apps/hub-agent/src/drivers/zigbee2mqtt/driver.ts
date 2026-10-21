@@ -124,7 +124,19 @@ export class Zigbee2mqttDriver implements Driver {
     }
     if (rest === 'bridge/event') {
       const ev = parseJson(payload) as { type?: string; data?: Record<string, unknown> } | undefined;
-      if (ev?.type === 'device_interview' && ev.data?.status === 'successful') this.onInterview(ev.data);
+      if (ev?.type === 'device_interview' && ev.data?.status === 'successful') {
+        this.onInterview(ev.data);
+      } else if (ev?.type === 'device_announce' && typeof ev.data?.ieee_address === 'string') {
+        const d = this.known.get(ev.data.ieee_address);
+        if (d && d.interviewed) for (const cb of this.deviceCbs) cb(d);
+      } else if (ev?.type === 'device_leave' && typeof ev.data?.ieee_address === 'string') {
+        const ieee = ev.data.ieee_address;
+        const fn = this.byIeee.get(ieee);
+        this.known.delete(ieee);
+        this.byIeee.delete(ieee);
+        if (fn) this.byName.delete(fn);
+        if (typeof ev.data?.friendly_name === 'string') this.byName.delete(ev.data.friendly_name);
+      }
       return;
     }
     if (rest.startsWith('bridge/response/')) {
@@ -262,6 +274,11 @@ export class Zigbee2mqttDriver implements Driver {
         }
       }
       throw e;
+    } finally {
+      this.known.delete(externalId);
+      this.byIeee.delete(externalId);
+      this.byName.delete(id);
+      this.byName.delete(externalId);
     }
   }
 
@@ -273,10 +290,13 @@ export class Zigbee2mqttDriver implements Driver {
   /** Rename the Z2M friendly_name (ieee -> `dev_…`). */
   async assignFriendlyName(ieee: string, devId: string): Promise<void> {
     const from = this.fn(ieee);
+    if (from === devId) return;
     await this.request('device/rename', { from, to: devId });
     this.byName.delete(from);
     this.byIeee.set(ieee, devId);
     this.byName.set(devId, ieee);
+    const d = this.known.get(ieee);
+    if (d) d.friendlyName = devId;
   }
 
   async ping(externalId: string): Promise<void> {

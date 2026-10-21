@@ -12,7 +12,7 @@ import type { CommandResult } from './handlers/types.js';
 import { errorToAck } from './handlers/types.js';
 
 /** Driver plus the Z2M-specific friendly_name assignment (optional for other drivers). */
-export type PairingDriver = Pick<Driver, 'startPairing' | 'stopPairing' | 'ping' | 'buildProperties'> & {
+export type PairingDriver = Pick<Driver, 'startPairing' | 'stopPairing' | 'ping' | 'buildProperties' | 'knownDevices'> & {
   assignFriendlyName?(externalId: string, devId: string): Promise<void>;
 };
 
@@ -107,6 +107,21 @@ export class PairingManager {
     this.timer?.cancel();
     this.timer = this.timers.setTimeout(() => void this.finish(), seconds * 1000);
     this.publish();
+
+    if (this.o.driver.knownDevices) {
+      for (const d of this.o.driver.knownDevices()) {
+        const known = this.o.registry.getByExternalId(d.externalId);
+        if (!known) {
+          if (d.interviewed) void this.onDiscovered(d);
+        } else if (known.device.status === 'new') {
+          if (!this.found.includes(known.device.id)) {
+            this.found.push(known.device.id);
+            this.publish();
+          }
+        }
+      }
+    }
+
     return { ok: true, result: { expiresAt: this.expiresAt } };
   }
 

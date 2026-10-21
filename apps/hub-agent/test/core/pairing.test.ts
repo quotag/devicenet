@@ -194,4 +194,41 @@ describe('Pairing + mock Z2M', () => {
     expect(s.sent).toHaveLength(0);
     expect((await s.core.pairing.start(60)).ok).toBe(false);
   });
+
+  it('re-pair after removal: device was deleted, interview creates new device without UNIQUE constraint failure', async () => {
+    s = await startStack({ withDevice: false });
+    await s.core.pairing.start(60);
+    s.mock.emitInterview(NEW_IEEE);
+    await until(() => s.cfg.devices.size === 1);
+    const firstDevId = [...s.cfg.devices.values()][0].id;
+    await s.core.pairing.stop();
+
+    await s.core.lifecycle.removeDevice(firstDevId, true);
+    expect(s.core.registry.get(firstDevId)).toBeUndefined();
+    expect(s.store.devices.get(firstDevId)?.doc.status).toBe('removed');
+
+    // Start pairing again and emit interview for the same IEEE
+    await s.core.pairing.start(60);
+    s.mock.emitInterview(NEW_IEEE);
+    await until(() => s.core.registry.getByExternalId(NEW_IEEE) !== undefined);
+    const newEntry = s.core.registry.getByExternalId(NEW_IEEE)!;
+    expect(newEntry.device.id).not.toBe(firstDevId);
+    expect(newEntry.device.status).toBe('new');
+    expect(s.core.registry.get(newEntry.device.id)).toBeDefined();
+    expect(s.store.devices.get(newEntry.device.id)?.doc.status).toBe('new');
+    expect(s.store.devices.get(firstDevId)).toBeUndefined();
+    await until(() => s.sent.some((m) => m.topic === pairingTopic && m.json.found?.includes(newEntry.device.id)));
+  });
+
+  it('pairing starts with already-known interviewed device unknown to registry → immediately discovered', async () => {
+    s = await startStack({ withDevice: false });
+    s.mock.emitInterview(NEW_IEEE);
+    await until(() => s.driver.knownDevices().some((d) => d.externalId === NEW_IEEE));
+
+    await s.core.pairing.start(60);
+    await until(() => s.core.registry.getByExternalId(NEW_IEEE) !== undefined);
+    const entry = s.core.registry.getByExternalId(NEW_IEEE)!;
+    expect(entry.device.status).toBe('new');
+    await until(() => s.sent.some((m) => m.topic === pairingTopic && m.json.found?.includes(entry.device.id)));
+  });
 });

@@ -57,6 +57,7 @@ export interface HubCore {
   pairing: PairingManager;
   commands: CommandProcessor;
   automation: Automation;
+  lifecycle: DeviceLifecycle;
   /** claimed → tenant/hub/site known; null → unclaimed */
   setIdentity(id: HubIdentity | null): void;
   /** MQTT topic patterns the bridge/LAN broker client must subscribe to */
@@ -187,6 +188,7 @@ export function createHubCore(o: HubCoreOptions): HubCore {
     pairing,
     commands,
     automation,
+    lifecycle,
     setIdentity(id) {
       publisher.setIdentity(id);
       if (id) {

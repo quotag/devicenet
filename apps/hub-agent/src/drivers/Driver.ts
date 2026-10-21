@@ -37,4 +37,5 @@ export interface Driver {
   toDriverValue(prop: Property, v: PropertyValue): unknown;
   /** "ON" -> true */
   fromDriverValue(prop: Property, raw: unknown): PropertyValue;
+  knownDevices?(): DiscoveredDevice[];
 }
