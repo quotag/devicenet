@@ -224,6 +224,27 @@ export class Registry {
     return e;
   }
 
+  /** Completely purge a device from memory and from persistent storage (e.g. orphaned device re-creation). */
+  delete(id: string): RegistryEntry | undefined {
+    const e = this.byId.get(id);
+    if (e) {
+      this.byId.delete(id);
+      this.byExt.delete(e.device.externalId);
+      this.byFn.delete(e.friendlyName);
+    }
+    this.repo?.delete(id);
+    return e;
+  }
+
+  /** Clear all in-memory devices (called on unclaim). */
+  clear(): RegistryEntry[] {
+    const list = Array.from(this.byId.values());
+    this.byId.clear();
+    this.byExt.clear();
+    this.byFn.clear();
+    return list;
+  }
+
   private emit(c: RegistryChange): void {
     for (const l of this.listeners) {
       try {

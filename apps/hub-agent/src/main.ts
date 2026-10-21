@@ -137,6 +137,14 @@ export async function startAgent(env: NodeJS.ProcessEnv = process.env): Promise<
     await configStore?.close().catch(() => {});
     configStore = null;
     await bridge.disconnectCloud().catch(() => {});
+
+    // Clear retained state on local broker, clean registry and local database tables
+    for (const entry of core.registry.all()) {
+      core.publisher.clearState(entry.device.id);
+    }
+    core.registry.clear();
+    store.resetForUnclaim();
+
     core.setIdentity(null);
     bridge.identityChanged();
     await claim.reset();

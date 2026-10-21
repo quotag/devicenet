@@ -16,6 +16,8 @@ export interface Store {
   snapshot: SnapshotRepo;
   events: EventsRepo;
   history: HistoryRepo;
+  /** Reset local claim-related tables on unclaim, preserving meta table (schemaVersion). */
+  resetForUnclaim(): void;
   close(): void;
 }
 
@@ -27,6 +29,17 @@ export function openStore(file: string, opts?: OpenOptions): Store {
     snapshot: new SnapshotRepo(db),
     events: new EventsRepo(db),
     history: new HistoryRepo(db),
+    resetForUnclaim: () => {
+      db.tx(() => {
+        db.exec(`
+          DELETE FROM devices;
+          DELETE FROM config_snapshot;
+          DELETE FROM rule_state;
+          DELETE FROM history;
+          DELETE FROM events;
+        `);
+      });
+    },
     close: () => db.close(),
   };
 }

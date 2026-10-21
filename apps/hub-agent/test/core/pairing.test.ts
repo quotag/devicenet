@@ -178,12 +178,12 @@ describe('Pairing + mock Z2M', () => {
 
     await until(() => s.cfg.devices.size === 1);
     const doc = Device.parse([...s.cfg.devices.values()][0]);
-    expect(doc.id).toBe(oldDev.id);
+    expect(doc.id).not.toBe(oldDev.id);
     expect(doc.hubId).toBe(IDENTITY.hubId);
     expect(doc.siteId).toBe(IDENTITY.siteId);
     expect(doc.status).toBe('new');
 
-    await until(() => s.sent.some((m) => m.topic === pairingTopic && m.json.found?.includes(oldDev.id)));
+    await until(() => s.sent.some((m) => m.topic === pairingTopic && m.json.found?.includes(doc.id)));
     await until(() => eventsOf('device.found').length === 1);
   });
 

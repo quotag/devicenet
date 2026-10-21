@@ -111,7 +111,9 @@ export class PairingManager {
     if (this.o.driver.knownDevices) {
       for (const d of this.o.driver.knownDevices()) {
         const known = this.o.registry.getByExternalId(d.externalId);
-        if (!known) {
+        const id = this.o.publisher.getIdentity();
+        const mismatch = id && known && (known.device.hubId !== id.hubId || known.device.siteId !== id.siteId);
+        if (!known || mismatch) {
           if (d.interviewed) void this.onDiscovered(d);
         } else if (known.device.status === 'new') {
           if (!this.found.includes(known.device.id)) {
@@ -151,24 +153,28 @@ export class PairingManager {
     const id = this.o.publisher.getIdentity();
 
     if (known) {
-      this.o.registry.setFriendlyName(known.device.id, d.friendlyName);
       if (!id) return null;
-
-      const devId = known.device.id;
       const mismatch = known.device.hubId !== id.hubId || known.device.siteId !== id.siteId;
-      if (this.active || mismatch) {
+      if (mismatch) {
+        // Orphaned device from previous hub/tenant claim: re-create as brand-new device under current hub
+        this.o.registry.delete(known.device.id);
         this.creating.add(d.externalId);
         try {
-          if (mismatch) {
-            known.device.hubId = id.hubId;
-            known.device.siteId = id.siteId;
-          }
-          if (this.active && known.device.status !== 'new') {
+          return await this.create(d, id.hubId, id.siteId);
+        } finally {
+          this.creating.delete(d.externalId);
+        }
+      }
+
+      this.o.registry.setFriendlyName(known.device.id, d.friendlyName);
+      const devId = known.device.id;
+      if (this.active) {
+        this.creating.add(d.externalId);
+        try {
+          if (known.device.status !== 'new') {
             known.device.status = 'new';
           }
           this.o.registry.updateDevice(devId, {
-            hubId: known.device.hubId,
-            siteId: known.device.siteId,
             status: known.device.status,
           });
 
