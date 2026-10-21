@@ -120,6 +120,7 @@ export class Bridge {
         password: cred.password,
         clean: false,
         keepalive: this.o.keepalive ?? 30,
+        rejectUnauthorized: !this.o.config.emulator && this.o.config.cloudMqttTls,
         will: {
           topic: topics.status(id.tenantId, id.hubId),
           payload: Buffer.from(JSON.stringify(lwt), 'utf8'),
