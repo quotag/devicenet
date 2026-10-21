@@ -121,6 +121,7 @@ describe('POST /v1/hubs/claim', () => {
       siteId: o.siteId,
       mqtt: { host: '127.0.0.1', port: 1884, wssPort: 8084, username: `hub:${hubId}` },
       apiBaseUrl: expect.any(String),
+      firebase: { projectId: 'demo-devicenet', apiKey: 'fake-api-key' },
     });
     const secret = HubSecret.parse((await db().doc(`tenants/${o.tenantId}/hubs/${hubId}/private/secret`).get()).data());
     expect(secret.secretHash).toBe(sha256Hex(cred.mqtt.password));

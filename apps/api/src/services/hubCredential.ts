@@ -13,9 +13,10 @@ export interface HubCredential {
   mqtt: { host: string; port: number; wssPort: number; username: string; password: string };
   firebaseCustomToken: string;
   apiBaseUrl: string;
+  firebase?: { projectId: string; apiKey: string };
 }
 
-/** MQTT endpoint from config; dev defaults = tools/dev-cloud-broker (tcp 1884, ws 8084). */
+/** MQTT endpoint & credentials from config; dev defaults = tools/dev-cloud-broker. */
 export function buildCredential(p: {
   tenantId: string;
   hubId: string;
@@ -37,5 +38,9 @@ export function buildCredential(p: {
     },
     firebaseCustomToken: p.customToken,
     apiBaseUrl: cfg.apiBaseUrl,
+    firebase: {
+      projectId: cfg.projectId,
+      apiKey: cfg.firebaseWebApiKey,
+    },
   };
 }

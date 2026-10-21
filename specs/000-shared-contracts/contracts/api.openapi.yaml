@@ -101,7 +101,7 @@ paths:
                     type: string
                     description: |
                       base64 ciphertext of JSON: { tenantId, hubId, siteId, mqtt: { host, port, wssPort, username: "hub:<hubId>", password },
-                      firebaseCustomToken, apiBaseUrl }
+                      firebaseCustomToken, apiBaseUrl, firebase: { projectId, apiKey } }
         "404": { description: Not claimed yet }
         "410": { description: Expired or already consumed }
   /v1/hubs/claim:

@@ -21,6 +21,12 @@ export const HubCredential = z.object({
   }),
   firebaseCustomToken: z.string().min(1),
   apiBaseUrl: z.string().url(),
+  firebase: z
+    .object({
+      projectId: z.string().min(1),
+      apiKey: z.string().min(1),
+    })
+    .optional(),
 });
 export type HubCredential = z.infer<typeof HubCredential>;
 

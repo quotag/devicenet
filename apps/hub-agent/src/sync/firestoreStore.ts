@@ -82,14 +82,28 @@ export class FirestoreConfigStore implements ConfigStore {
   private readyResolve!: () => void;
   private ready = new Promise<void>((r) => (this.readyResolve = r));
   private closed = false;
-
   constructor(private readonly o: FirestoreStoreOptions) {
     this.cred = o.credential;
-    const projectId = o.projectId ?? process.env.DN_FIREBASE_PROJECT ?? process.env.GCLOUD_PROJECT ?? 'demo-devicenet';
+    const projectId =
+      o.projectId ??
+      this.cred.firebase?.projectId ??
+      process.env.DN_FIREBASE_PROJECT ??
+      process.env.GCLOUD_PROJECT ??
+      (o.emulator ? 'demo-devicenet' : undefined);
+    const apiKey =
+      o.apiKey ??
+      this.cred.firebase?.apiKey ??
+      process.env.DN_FIREBASE_API_KEY ??
+      (o.emulator ? 'demo-key' : undefined);
+
+    if (!projectId || !apiKey) {
+      throw new Error(`Missing Firebase projectId or apiKey for hub ${this.cred.hubId}`);
+    }
+
     if (o.emulator) clearProxyEnv();
     const name = o.appName ?? `hub-${this.cred.hubId}`;
     const existing = getApps().find((a) => a.name === name);
-    this.app = existing ?? initializeApp({ projectId, apiKey: o.apiKey ?? process.env.DN_FIREBASE_API_KEY ?? 'demo-key' }, name);
+    this.app = existing ?? initializeApp({ projectId, apiKey }, name);
     this.auth = initializeAuth(this.app, { persistence: inMemoryPersistence });
     this.db = initializeFirestore(this.app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
     if (o.emulator) {
