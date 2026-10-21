@@ -1,3 +1,5 @@
+# Compute Engine VM Configuration for EMQX Broker
+
 resource "google_compute_instance" "emqx_vm" {
   name         = "devicenet-emqx-vm"
   machine_type = var.vm_machine_type
@@ -6,18 +8,19 @@ resource "google_compute_instance" "emqx_vm" {
   boot_disk {
     initialize_params {
       image = "debian-cloud/${var.vm_image}"
-      size  = 50
+      size  = 25
+      type  = "pd-standard"
     }
   }
 
   network_interface {
     network = var.vm_network
     access_config {
-      // Ephemeral IP
+      nat_ip = google_compute_address.emqx_ip.address
     }
   }
 
-  metadata_startup_script = base64decode(base64encode(file("${path.module}/../vm/startup.sh")))
+  metadata_startup_script = file("${path.module}/../vm/startup.sh")
 
   metadata = {
     enable-oslogin = "true"
@@ -29,6 +32,11 @@ resource "google_compute_instance" "emqx_vm" {
   }
 
   tags = ["emqx-server"]
+
+  depends_on = [
+    google_project_service.apis,
+    google_compute_address.emqx_ip
+  ]
 }
 
 resource "google_service_account" "vm_sa" {
@@ -48,6 +56,18 @@ resource "google_project_iam_member" "vm_sa_metric_writer" {
   member  = "serviceAccount:${google_service_account.vm_sa.email}"
 }
 
+resource "google_project_iam_member" "vm_sa_secret_accessor" {
+  project = var.gcp_project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.vm_sa.email}"
+}
+
 output "vm_external_ip" {
-  value = google_compute_instance.emqx_vm.network_interface[0].access_config[0].nat_ip
+  value       = google_compute_address.emqx_ip.address
+  description = "Static external IP bound to the EMQX VM"
+}
+
+output "vm_mqtt_domain" {
+  value       = var.mqtt_domain != "" ? var.mqtt_domain : "${google_compute_address.emqx_ip.address}.sslip.io"
+  description = "Resolved MQTT domain used for TLS and client connections"
 }

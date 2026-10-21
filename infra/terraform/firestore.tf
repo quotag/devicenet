@@ -1,14 +1,9 @@
 resource "google_firestore_database" "database" {
-  name            = "(default)"
-  location_id     = var.gcp_region
-  type            = "FIRESTORE_NATIVE"
-  project         = var.gcp_project_id
-  depends_on      = [google_project_service.firestore]
-}
-
-resource "google_project_service" "firestore" {
-  service            = "firestore.googleapis.com"
-  disable_on_destroy = false
+  name        = "(default)"
+  location_id = var.gcp_region
+  type        = "FIRESTORE_NATIVE"
+  project     = var.gcp_project_id
+  depends_on  = [google_project_service.apis]
 }
 
 resource "google_firestore_field" "private_secretHash" {
