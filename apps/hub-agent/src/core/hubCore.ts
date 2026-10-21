@@ -114,7 +114,7 @@ export function createHubCore(o: HubCoreOptions): HubCore {
     pairing,
     ...(o.store ? { history: o.store.history } : {}),
   };
-  const lifecycle = new DeviceLifecycle({ registry, driver: o.driver, publisher, events, pairing, configStore, clock, log: o.log });
+  const lifecycle = new DeviceLifecycle({ registry, driver: o.driver, publisher, events, pairing, configStore, snapshot: o.store?.snapshot, clock, log: o.log });
   ctx.lifecycle = lifecycle;
   // ---- automation (FR-H08): engine (property) + scheduler (schedule/sun) → runner ----
   const engine = new AutomationEngine({ registry, clock, timers, events, configStore, log: o.log });

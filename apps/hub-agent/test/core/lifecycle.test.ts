@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { newId } from '../../src/core/ids.js';
 import { IDENTITY, IEEE, makeDevice, until } from './helpers.js';
 import { startStack, type Stack } from './stack.js';
+import { Reconciler } from '../../src/sync/reconciler.js';
 
 const cmdTopic = topics.cmd(IDENTITY.tenantId, IDENTITY.hubId);
 const env = (cmd: unknown) => JSON.stringify({ v: 1, id: newId('cmd'), sentAt: 1, cmd });
@@ -108,5 +109,52 @@ describe('device lifecycle (mock Z2M)', () => {
     expect(e.device.status).toBe('new');
     expect(e.device.externalId).toBe(s.driver.knownDevices()[0]!.externalId);
     await until(() => s.cfg.devices.has(e.device.id));
+  });
+
+  it('remove device while Firestore is offline -> marked unsynced in SQLite, reconciled when cloud is back', async () => {
+    const dev = await start();
+    s.cfg.failNext = new Error('network down');
+    await s.core.handleMessage(cmdTopic, env({ type: 'device.remove', deviceId: dev.id, force: true }), 'cloud');
+    expect(acks().at(-1)).toMatchObject({ ok: true });
+    // Device removed from registry
+    expect(s.core.registry.get(dev.id)).toBeUndefined();
+    // Device remains unsynced in SQLite with status removed
+    const unsynced = s.store.devices.unsynced();
+    expect(unsynced.some((r) => r.id === dev.id && r.doc.status === 'removed')).toBe(true);
+
+    // Reconnect / reconcile
+    const rec = new Reconciler({ store: s.cfg, registry: s.core.registry, db: s.store });
+    rec.start();
+    await rec.reconcile();
+    rec.stop();
+
+    // Now cloud doc is updated to removed and SQLite marked synced
+    expect(s.cfg.devices.get(dev.id)?.status).toBe('removed');
+    expect(s.store.devices.unsynced().some((r) => r.id === dev.id)).toBe(false);
+  });
+
+  it('rule referencing deleted device is broken even if rules are only in snapshot', async () => {
+    const dev = await start();
+    const setAct = (deviceId: string) => ({ type: 'setProperty' as const, deviceId, property: 'state', value: true });
+    const rule: Rule = {
+      siteId: IDENTITY.siteId,
+      hubId: IDENTITY.hubId,
+      rev: 1,
+      updatedAt: 1,
+      id: newId('rule'),
+      name: 'broken-rule',
+      enabled: true,
+      trigger: { type: 'schedule', at: '08:00' },
+      actions: [setAct(dev.id)],
+    } as unknown as Rule;
+
+    // Rule exists in cloud store and in local snapshot, but lifecycle RAM is empty
+    s.cfg.rules.set(rule.id, rule);
+    s.store.snapshot.put('rules', [rule], 1000);
+    s.core.lifecycle.setRulesAndScenes([], []);
+
+    await s.core.lifecycle.removeDevice(dev.id, true);
+    expect(s.cfg.rules.get(rule.id)?.brokenReason).toBeTruthy();
+    expect(s.cfg.rules.get(rule.id)?.lastResult).toBe('broken');
   });
 });

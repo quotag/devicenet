@@ -1,6 +1,7 @@
 import { referencedIds, type Rule, type Scene } from '@devicenet/shared';
 import type { DiscoveredDevice, Driver } from '../drivers/Driver.js';
 import type { ConfigStore, Unsubscribe } from '../sync/ConfigStore.js';
+import type { SnapshotRepo } from '../store/snapshot.js';
 import type { Clock } from './clock.js';
 import { realClock } from './clock.js';
 import type { HubEvents } from './events.js';
@@ -17,6 +18,7 @@ export interface LifecycleOptions {
   events: HubEvents;
   pairing: Pick<PairingManager, 'onDiscovered'>;
   configStore: () => ConfigStore | null | undefined;
+  snapshot?: Pick<SnapshotRepo, 'get'>;
   clock?: Clock;
   log?: Log;
 }
@@ -66,7 +68,7 @@ export class DeviceLifecycle {
       await driver.removeDevice(entry.device.externalId, force);
     } catch (e) {
       const msg = (e as Error)?.message ?? '';
-      const isAlreadyGone = /does not exist|not found|unknown/i.test(msg);
+      const isAlreadyGone = /does not exist|not found/i.test(msg);
       if (!force && !isAlreadyGone) throw e;
       this.o.log?.warn?.({ deviceId, externalId: entry.device.externalId, err: msg }, 'Driver removeDevice failed or device already gone; proceeding with registry removal');
     }
@@ -79,6 +81,7 @@ export class DeviceLifecycle {
     if (store) {
       try {
         await store.updateDeviceHubFields(deviceId, { status: 'removed', removedAt: now, updatedAt: now });
+        registry.markSynced(deviceId, true);
       } catch (e) {
         this.o.log?.warn({ deviceId, err: (e as Error).message }, 'Firestore device removed update failed');
       }
@@ -90,14 +93,22 @@ export class DeviceLifecycle {
     this.ensureWatching();
     const store = this.o.configStore();
     if (!store) return;
+    let scenes = this.scenes;
+    let rules = this.rules;
+    if (scenes.length === 0 && this.o.snapshot) {
+      scenes = this.o.snapshot.get<Scene[]>('scenes')?.json ?? [];
+    }
+    if (rules.length === 0 && this.o.snapshot) {
+      rules = this.o.snapshot.get<Rule[]>('rules')?.json ?? [];
+    }
     const reason = 'Thiết bị đã bị xóa';
     const brokenScenes = new Set<string>();
-    for (const s of this.scenes) {
+    for (const s of scenes) {
       if (!referencedIds(s).devices.has(deviceId)) continue;
       brokenScenes.add(s.id);
       await this.write(() => store.updateSceneHubFields(s.id, { brokenReason: reason, lastResult: 'broken' }), s.id);
     }
-    for (const r of this.rules) {
+    for (const r of rules) {
       const ref = referencedIds(r);
       const viaScene = [...ref.scenes].some((id) => brokenScenes.has(id));
       if (!ref.devices.has(deviceId) && !viaScene) continue;

@@ -161,8 +161,10 @@ export class Registry {
 
   markSynced(id: string, synced: boolean): void {
     const e = this.byId.get(id);
-    if (!e || e.synced === synced) return;
-    e.synced = synced;
+    if (e) {
+      if (e.synced === synced) return;
+      e.synced = synced;
+    }
     this.repo?.setSynced(id, synced);
   }
 
@@ -219,6 +221,7 @@ export class Registry {
     this.byFn.delete(e.friendlyName);
     if (removedDoc) {
       e.device = removedDoc;
+      e.synced = false;
       this.save(e);
     }
     return e;
