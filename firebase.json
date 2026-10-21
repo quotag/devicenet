@@ -8,7 +8,7 @@
   },
   "hosting": {
     "public": "apps/web/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "**/agent/*.zip", "**/agent/*.zip.sha256"],
     "rewrites": [
       {
         "source": "**",

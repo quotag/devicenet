@@ -53,12 +53,14 @@ if ($Uninstall) {
 # In one-liner mode (`irm ... | iex`), $PSScriptRoot is empty.
 # We resolve $PackageUrl from passed param, caller variables ($u, $BaseUrl), or environment variables.
 if (-not $PackageUrl) {
-  if ($u) {
-    $PackageUrl = "$u/agent/devicenet-windows-x64.zip"
-  } elseif ($BaseUrl) {
-    $PackageUrl = "$BaseUrl/agent/devicenet-windows-x64.zip"
-  } elseif ($env:DEVICENET_PACKAGE_URL) {
+  if ($env:DEVICENET_PACKAGE_URL) {
     $PackageUrl = $env:DEVICENET_PACKAGE_URL
+  } elseif ($u -and ($u -match 'localhost|127\.0\.0\.1|192\.168\.|10\.')) {
+    $PackageUrl = "$u/agent/devicenet-windows-x64.zip"
+  } elseif ($BaseUrl -and ($BaseUrl -match 'localhost|127\.0\.0\.1|192\.168\.|10\.')) {
+    $PackageUrl = "$BaseUrl/agent/devicenet-windows-x64.zip"
+  } else {
+    $PackageUrl = "https://github.com/quotag/devicenet/releases/download/v0.1.0/devicenet-windows-x64.zip"
   }
 }
 if (-not $ApiBaseUrl) {

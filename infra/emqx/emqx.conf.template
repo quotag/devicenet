@@ -80,10 +80,8 @@ listeners {
 authentication = [
   {
     mechanism = "jwt"
-    backend = "jwt"
     enable = true
     from = "password"
-    precondition = "is_jwt(password)"
     use_jwks = true
     endpoint = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
     acl_claim_name = "acl"
@@ -167,7 +165,6 @@ connectors {
       }
       pool_size = 8
       connect_timeout = "5s"
-      request_timeout = "5s"
       ssl {
         enable = true
       }
@@ -179,15 +176,17 @@ actions {
   http {
     status_webhook_action {
       connector = "status_webhook_connector"
-      method = "post"
-      path = "/v1/emqx/webhook"
-      body = """
-      {
-        "topic": "${topic}",
-        "payload": ${payload},
-        "publish_received_at": ${publish_received_at}
+      parameters {
+        method = "post"
+        path = "/v1/emqx/webhook"
+        body = """
+        {
+          "topic": "${topic}",
+          "payload": ${payload},
+          "publish_received_at": ${publish_received_at}
+        }
+        """
       }
-      """
     }
   }
 }
