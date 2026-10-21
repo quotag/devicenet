@@ -25,6 +25,8 @@ export interface PublisherOptions {
   registry: Registry;
   clock?: Clock;
   timers?: TimerHost;
+  /** initial seq counter (defaults to clock.now()) */
+  initialSeq?: number;
   /** coalescing window for state changes (realtime §2.5) */
   coalesceMs?: number;
   /** min interval between two state publishes of one device */
@@ -52,7 +54,7 @@ interface DeviceTimers {
  * Without an identity (unclaimed hub) nothing is published (data-model §4).
  */
 export class Publisher {
-  private seq = 0;
+  private seq: number;
   private links = new Map<string, PublishLink>();
   private identity: HubIdentity | null = null;
   private devTimers = new Map<string, DeviceTimers>();
@@ -75,6 +77,7 @@ export class Publisher {
     this.minIntervalMs = opts.minIntervalMs ?? 1000;
     this.heartbeatMs = opts.heartbeatMs ?? 60_000;
     this.onError = opts.onError ?? (() => {});
+    this.seq = opts.initialSeq !== undefined ? opts.initialSeq : this.clock.now();
   }
 
   addLink(name: string, link: PublishLink): () => void {

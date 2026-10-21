@@ -89,12 +89,29 @@ describe('Publisher', () => {
     pub.publishPairing({ active: false, found: [] });
     pub.publishHub('ack', { id: 'cmd_01HZZZZZZZZZZZZZZZZZZZZZZZ', ok: true });
     const seqs = sent.filter((s) => s.link === 'local').map((s) => s.json.seq);
-    expect(seqs).toEqual([1, 2, 3]);
+    expect(seqs).toEqual([1_000_001, 1_000_002, 1_000_003]);
     const pairing = sent.find((s) => s.topic === topics.pairing(IDENTITY.tenantId, IDENTITY.hubId))!;
     expect(pairing.opts).toEqual({ qos: 1, retain: true });
     PairingState.parse(pairing.json);
     const ack = sent.find((s) => s.topic === topics.ack(IDENTITY.tenantId, IDENTITY.hubId))!;
     expect(ack.opts).toEqual({ qos: 1, retain: false });
+  });
+
+  it('restart after 5ms: new publisher instance seq > last seq of previous instance', () => {
+    const t0 = new FakeTime(1_700_000_000_000);
+    const pub1 = new Publisher({ registry: reg, clock: t0, timers: t0 });
+    pub1.setIdentity(IDENTITY);
+    const m1 = pub1.publishHub('events', { ev: 1 })!;
+    const m2 = pub1.publishHub('events', { ev: 2 })!;
+    expect(m2.seq).toBeGreaterThan(m1.seq);
+    const lastSeq1 = pub1.lastSeq;
+
+    // 5ms later, hub restarts -> Instance 2
+    t0.advance(5);
+    const pub2 = new Publisher({ registry: reg, clock: t0, timers: t0 });
+    pub2.setIdentity(IDENTITY);
+    const m3 = pub2.publishHub('events', { ev: 3 })!;
+    expect(m3.seq).toBeGreaterThan(lastSeq1);
   });
 
   it('clearState publishes an empty retained payload and stops timers', () => {
