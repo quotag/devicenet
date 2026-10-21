@@ -1,21 +1,26 @@
-# Caddy configuration for DeviceNet
-# Uses sslip.io for automatic DNS + TLS
-# Replace {IP} with the actual VM external IP
+# Caddy configuration for DeviceNet Kick Proxy
+# Provides secure HTTPS termination on port 443 for Cloud Run -> EMQX client kick API.
+# Only the narrow DELETE /api/v5/clients/hub-hub_<ulid> path is exposed, protected by X-DN-Token.
 
-{IP}.sslip.io {
-  tls internal
+{$MQTT_DOMAIN} {
+  tls /etc/certs/fullchain.pem /etc/certs/privkey.pem
   encode gzip
 
-  # Reverse proxy for EMQX dashboard (if needed)
-  handle /api/v5/* {
+  @kick {
+    method DELETE
+    path_regexp kick ^/api/v5/clients/hub-hub_[0-9A-Z]{26}$
+    header X-DN-Token {$EMQX_SHARED_TOKEN}
+  }
+
+  handle @kick {
     reverse_proxy emqx:18083
   }
 
-  # Health check endpoint
-  handle /health {
+  handle /healthz {
     respond "OK" 200
   }
 
-  # Default response
-  respond 404
+  handle {
+    respond 404
+  }
 }
