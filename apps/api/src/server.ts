@@ -13,26 +13,33 @@ import { hubDeleteRoutes } from './routes/hubDelete.js';
 import { emqxAuthRoutes } from './routes/emqxAuth.js';
 import { emqxAclRoutes } from './routes/emqxAcl.js';
 import { webhookRoutes } from './routes/webhook.js';
+import { type ApiConfig, getConfig } from './config.js';
 
 export interface ServerOptions {
   logger?: boolean;
+  config?: ApiConfig;
   /** extra allowed CORS origins; default env HOSTING_ORIGIN (comma separated) */
   hostingOrigins?: string[];
 }
 
 export async function buildServer(opts: ServerOptions = {}): Promise<FastifyInstance> {
-  const app = Fastify({ logger: opts.logger ?? false });
-  const hosting =
-    opts.hostingOrigins ?? (process.env.HOSTING_ORIGIN ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const cfg = opts.config ?? getConfig();
+  const app = Fastify({
+    logger: opts.logger ?? false,
+    trustProxy: cfg.trustProxy ?? true,
+  });
+  const hosting = opts.hostingOrigins ?? cfg.hostingOrigins;
+  const allowLocalhost = cfg.isEmulator || cfg.nodeEnv === 'test';
 
   await app.register(helmet);
   await app.register(cors, {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
-      cb(null, /^http:\/\/localhost(:\d+)?$/.test(origin) || hosting.includes(origin));
+      const isAllowed = hosting.includes(origin) || (allowLocalhost && /^http:\/\/localhost(:\d+)?$/.test(origin));
+      cb(null, isAllowed);
     },
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-EMQX-Token', 'X-DN-Token'],
   });
   await registerRateLimit(app);
 

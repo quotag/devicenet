@@ -1,9 +1,16 @@
+import { loadConfig, setConfig } from './config.js';
 import { buildServer } from './server.js';
 import { projectId } from './firebase.js';
 
-const port = Number(process.env.PORT ?? 3000);
-const host = process.env.HOST ?? '0.0.0.0';
+let config;
+try {
+  config = loadConfig();
+  setConfig(config);
+} catch (err) {
+  console.error(`[FATAL CONFIG ERROR] ${(err as Error).message}`);
+  process.exit(1);
+}
 
-const app = await buildServer({ logger: true });
-await app.listen({ port, host });
+const app = await buildServer({ logger: true, config });
+await app.listen({ port: config.port, host: config.host });
 app.log.info({ projectId: projectId() }, 'DeviceNet API ready');
