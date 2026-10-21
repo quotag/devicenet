@@ -1,5 +1,6 @@
 import { Device, EventDoc, Hub, Layout, Room, Rule, Scene, Site, type DeviceId, type HubId } from "@devicenet/shared";
 import { configStore } from "@/stores/config";
+import { uiStore } from "@/stores/ui";
 import { deferred, parseDoc, parseDocs, type ConfigSource } from "../ConfigSource";
 
 export const LAN_POLL_MS = 30_000;
@@ -99,7 +100,13 @@ export class LanConfigSource implements ConfigSource {
     const st = configStore.getState();
     const site = parseDoc(Site, c.site, "site");
     st.setSites(site ? [site] : []);
-    if (site) st.setRooms(site.id, parseDocs(Room, c.rooms ?? [], "room").sort((a, b) => a.order - b.order));
+    if (site) {
+      const currentUiSite = uiStore.getState().siteId;
+      if (!currentUiSite || currentUiSite !== site.id) {
+        uiStore.getState().setSiteId(site.id);
+      }
+      st.setRooms(site.id, parseDocs(Room, c.rooms ?? [], "room").sort((a, b) => a.order - b.order));
+    }
     const devices: Record<DeviceId, Device> = {};
     for (const d of parseDocs(Device, c.devices ?? [], "device")) devices[d.id as DeviceId] = d;
     st.setDevices(devices);

@@ -25,9 +25,11 @@ const close = () => uiStore.getState().closeSheet();
 export function RoomSheet({ siteId, onCreated }: RoomSheetProps) {
   const s = vi.sh5;
   const writes = useConfigWrites();
+  const sites = useStore(configStore, (st) => st.sites);
   const uiSite = useStore(uiStore, (st) => st.siteId);
-  const site = siteId ?? uiSite;
-  const siteName = useStore(configStore, (st) => st.sites.find((x) => x.id === site)?.name ?? "");
+  const currentSite = sites.find((x) => x.id === (siteId ?? uiSite)) ?? sites[0];
+  const site = siteId ?? currentSite?.id;
+  const siteName = currentSite?.name ?? "";
   const rooms = useRooms(site as never);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);

@@ -123,4 +123,12 @@ describe("RuleEditorScreen", () => {
     );
     expect(within(screen.getByRole("list", { name: t.test })).getByText(t.testStep(1, t.stepStatus.ok))).toBeInTheDocument();
   });
+
+  it("falls back to sites[0] and shows devices when uiStore siteId is stale or nonexistent", async () => {
+    uiStore.setState({ siteId: "site_stale_from_another_tenant" as never });
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: `${t.add} ${t.when}` }));
+    const select = screen.getByRole("combobox", { name: t.device });
+    expect(within(select).getByRole("option", { name: washer.name })).toBeInTheDocument();
+  });
 });

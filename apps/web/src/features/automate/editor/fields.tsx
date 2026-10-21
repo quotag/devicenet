@@ -15,12 +15,14 @@ export function SelectField({
   onChange,
   options,
   invalid,
+  placeholder = t.pick,
 }: {
   label: string;
   value: string | undefined;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
   invalid?: boolean;
+  placeholder?: string;
 }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -33,7 +35,7 @@ export function SelectField({
         style={{ minHeight: 44, borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-2)", color: "var(--text)", padding: "0 12px", font: "inherit" }}
       >
         <option value="" disabled>
-          {t.pick}
+          {placeholder}
         </option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

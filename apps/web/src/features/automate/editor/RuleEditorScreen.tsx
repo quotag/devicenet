@@ -74,7 +74,8 @@ export function RuleEditorScreen({ target, onClose, saveDeps }: RuleEditorScreen
   const rulesMap = useStore(configStore, (s) => s.rules);
   const run = useStore(connectionStore, (s) => (runId ? s.runs[runId as keyof typeof s.runs] : undefined));
   const existing = target.kind === "edit" ? (target.mode === "rule" ? rulesMap[target.id] : scenesMap[target.id]) : undefined;
-  const siteId = existing?.siteId ?? uiSite ?? sites[0]?.id;
+  const currentSite = sites.find((s) => s.id === uiSite) ?? sites[0];
+  const siteId = existing?.siteId ?? currentSite?.id;
   const hub = useHub(siteId);
   const send = useSendCommand();
 

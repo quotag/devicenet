@@ -1,5 +1,6 @@
 import { Device, EventDoc, Hub, Room, Rule, Scene, Site, type DeviceId, type HubId, type SiteId } from "@devicenet/shared";
 import { configStore, type CollectionName } from "@/stores/config";
+import { uiStore } from "@/stores/ui";
 import { paths } from "@/lib/paths";
 import { deferred, parseDocs, type ConfigSource } from "../ConfigSource";
 
@@ -109,6 +110,10 @@ export class FirestoreConfigSource implements ConfigSource {
           if (gen !== this.gen) return;
           const sites = parseDocs(Site, withId(docs), "site");
           configStore.getState().setSites(sites);
+          const currentUiSite = uiStore.getState().siteId;
+          if (sites.length > 0 && (!currentUiSite || !sites.some((s) => s.id === currentUiSite))) {
+            uiStore.getState().setSiteId(sites[0].id);
+          }
           this.syncRooms(a, tenantId, sites.map((s) => s.id), gen);
           this.mark("sites", meta.fromCache);
         },

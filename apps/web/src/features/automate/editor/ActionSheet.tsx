@@ -42,7 +42,18 @@ function Body({ value, devices, scenes, onSubmit, onOpenChange }: ActionSheetPro
       <SegmentedTabs label={t.addActionBtn} items={KINDS.map((k) => t.actionKind[k])} value={KINDS.indexOf(d.type)} onChange={setKind} />
       {d.type === "setProperty" && (
         <>
-          <SelectField label={t.device} value={d.deviceId} options={deviceOptions(devices)} onChange={(v) => setD({ type: "setProperty", deviceId: v })} />
+          <SelectField
+            label={t.device}
+            value={d.deviceId}
+            options={deviceOptions(devices)}
+            placeholder={devices.length === 0 ? "Không có thiết bị khả dụng" : t.pick}
+            onChange={(v) => setD({ type: "setProperty", deviceId: v })}
+          />
+          {devices.length === 0 && (
+            <span className="cap" style={{ color: "var(--text-muted)" }}>
+              Không có thiết bị khả dụng trong site này
+            </span>
+          )}
           <SelectField label={t.property} value={d.property} options={propertyOptions(device, true)} onChange={(v) => setD({ type: "setProperty", deviceId: d.deviceId, property: v })} />
           <ValueField device={device} property={d.property} value={d.value} onChange={(v) => setD({ ...d, value: v })} />
         </>

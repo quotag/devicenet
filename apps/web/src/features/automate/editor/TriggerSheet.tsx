@@ -41,7 +41,18 @@ function Body({ value, devices, onSubmit, onOpenChange }: TriggerSheetProps) {
       <SegmentedTabs label={t.pickTrigger} items={[t.trigger.device, t.trigger.time, t.trigger.sun]} value={KINDS.indexOf(d.type)} onChange={setKind} />
       {d.type === "property" && (
         <>
-          <SelectField label={t.device} value={d.deviceId} options={deviceOptions(devices)} onChange={(v) => setD({ type: "property", deviceId: v })} />
+          <SelectField
+            label={t.device}
+            value={d.deviceId}
+            options={deviceOptions(devices)}
+            placeholder={devices.length === 0 ? "Không có thiết bị khả dụng" : t.pick}
+            onChange={(v) => setD({ type: "property", deviceId: v })}
+          />
+          {devices.length === 0 && (
+            <span className="cap" style={{ color: "var(--text-muted)" }}>
+              Không có thiết bị khả dụng trong site này
+            </span>
+          )}
           <SelectField label={t.property} value={d.property} options={propertyOptions(device)} onChange={(v) => setD({ type: "property", deviceId: d.deviceId, property: v })} />
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span className="cap">{t.compare}</span>
