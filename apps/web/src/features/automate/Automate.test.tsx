@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi as vitest } from "vitest";
 import type { Device, HubId, RunId, RunProgress, Rule, Scene } from "@devicenet/shared";
-import { configStore, connectionStore, resetAll, sessionStore, toastStore } from "@/stores";
+import { configStore, connectionStore, resetAll, sessionStore, toastStore, uiStore } from "@/stores";
 import { vi } from "@/i18n/vi";
 import { TransportProvider } from "@/transport/TransportProvider";
 import { createFakeTransport } from "../../../test/fakeTransport";
@@ -175,6 +175,25 @@ describe("Automate empty + suggestions", () => {
     const r = buildSuggestions([washer, yard], "rule").map((x) => x.title);
     expect(r).toContain("Báo khi công suất > 1500 W");
     expect(buildSuggestions([], "rule")).toEqual([]);
+  });
+
+  it("preserves active tab in uiStore and initializes from uiStore when initialTab is omitted", () => {
+    uiStore.getState().setAutomateTab(1);
+    const t = createFakeTransport({
+      sites: [site] as never,
+      hubs: [{ id: hubId, name: "Hub", siteId, online: true }] as never,
+      devices: [washer, yard],
+      rules: [rule("A", "Tắt quạt")],
+    });
+    render(
+      <TransportProvider transport={t}>
+        <AutomateScreen />
+      </TransportProvider>,
+    );
+    expect(screen.getByText("Tắt quạt")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: vi.automate.tabs[0] }));
+    expect(uiStore.getState().automateTab).toBe(0);
   });
 });
 

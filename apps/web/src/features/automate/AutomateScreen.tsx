@@ -20,8 +20,15 @@ export interface AutomateScreenProps {
   initialTab?: 0 | 1;
 }
 
-export function AutomateScreen({ onOpenEditor = openEditor, initialTab = 0 }: AutomateScreenProps) {
-  const [tab, setTab] = useState<number>(initialTab);
+export function AutomateScreen({ onOpenEditor = openEditor, initialTab }: AutomateScreenProps) {
+  const storeTab = useStore(uiStore, (s) => s.automateTab);
+  const [localTab, setLocalTab] = useState<number | undefined>(initialTab);
+  const tab = localTab ?? storeTab;
+  const setTab = (t: number) => {
+    const val = (t === 1 ? 1 : 0) as 0 | 1;
+    setLocalTab(val);
+    uiStore.getState().setAutomateTab(val);
+  };
   const sites = useStore(configStore, (s) => s.sites);
   const uiSite = useStore(uiStore, (s) => s.siteId);
   const devices = useStore(configStore, (s) => s.devices);

@@ -3,6 +3,7 @@ import { LoginScreen } from "@/features/auth/LoginScreen";
 import { HomeScreen } from "@/features/home/HomeScreen";
 import { setCurrentTarget } from "@/features/automate/editor/editorNav";
 import { setEditorOpener } from "@/features/automate/editorTarget";
+import { uiStore } from "@/stores";
 import { guard } from "./guards";
 import { TabLayout } from "./TabLayout";
 import { RootLayout } from "./RootLayout";
@@ -72,6 +73,8 @@ export function createAppRouter(initialPath?: string) {
   });
   // S-02 cards / suggestions / "+" open S-30 through this hook (B17 → B19).
   setEditorOpener((target) => {
+    const mode = target.kind === "suggestion" ? target.draft.mode : target.mode;
+    uiStore.getState().setAutomateTab(mode === "rule" ? 1 : 0);
     setCurrentTarget(target);
     void router.navigate({ to: "/automate/editor" });
   });

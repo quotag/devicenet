@@ -32,6 +32,7 @@ export interface UiState {
   sheet: Sheet | null;
   highlight: { deviceId: DeviceId; until: number } | null;
   theme: Theme;
+  automateTab: 0 | 1;
   setSiteId(id: SiteId | null): void;
   setFilter(f: "all" | RoomId): void;
   setArranging(v: boolean): void;
@@ -39,6 +40,7 @@ export interface UiState {
   closeSheet(): void;
   setHighlight(h: { deviceId: DeviceId; until: number } | null): void;
   setTheme(t: Theme): void;
+  setAutomateTab(tab: 0 | 1): void;
   reset(): void;
 }
 
@@ -49,6 +51,7 @@ export const uiStore = createStore<UiState>((set) => ({
   sheet: null,
   highlight: null,
   theme: "system",
+  automateTab: 0,
   setSiteId: (siteId) => {
     writeSite(siteId);
     set({ siteId, filter: "all" });
@@ -59,6 +62,7 @@ export const uiStore = createStore<UiState>((set) => ({
   closeSheet: () => set({ sheet: null }),
   setHighlight: (highlight) => set({ highlight }),
   setTheme: (theme) => set({ theme }),
+  setAutomateTab: (automateTab) => set({ automateTab }),
   // siteId and theme are persisted preferences; keep them on sign-out reset.
-  reset: () => set({ filter: "all", arranging: false, sheet: null, highlight: null }),
+  reset: () => set({ filter: "all", arranging: false, sheet: null, highlight: null, automateTab: 0 }),
 }));

@@ -6,7 +6,7 @@ import { Input } from "@/components/dn/Input";
 import { SegmentedTabs } from "@/components/dn/SegmentedTabs";
 import { Sheet } from "@/components/dn/Sheet";
 import { vi } from "@/i18n/vi";
-import { DaysChips, OPS_ORDER, SelectField, SheetActions, ValueField, deviceOptions, propertyOptions } from "./fields";
+import { DaysChips, SelectField, SheetActions, ValueField, allowedOpsForProperty, deviceOptions, propertyOptions } from "./fields";
 import type { DraftTrigger } from "./state";
 
 const t = vi.s30;
@@ -36,6 +36,9 @@ function Body({ value, devices, onSubmit, onOpenChange }: TriggerSheetProps) {
     if (k !== d.type) setD(k === "property" ? { type: "property" } : k === "schedule" ? { type: "schedule" } : { type: "sun", event: "sunrise", offsetMin: 0 });
   };
   const device = d.type === "property" ? devices.find((x) => x.id === d.deviceId) : undefined;
+  const propDef = device && d.type === "property" && d.property ? device.properties[d.property] : undefined;
+  const ops = allowedOpsForProperty(propDef?.type, true);
+
   return (
     <SheetActions>
       <SegmentedTabs label={t.pickTrigger} items={[t.trigger.device, t.trigger.time, t.trigger.sun]} value={KINDS.indexOf(d.type)} onChange={setKind} />
@@ -53,11 +56,21 @@ function Body({ value, devices, onSubmit, onOpenChange }: TriggerSheetProps) {
               Không có thiết bị khả dụng trong site này
             </span>
           )}
-          <SelectField label={t.property} value={d.property} options={propertyOptions(device)} onChange={(v) => setD({ type: "property", deviceId: d.deviceId, property: v })} />
+          <SelectField
+            label={t.property}
+            value={d.property}
+            options={propertyOptions(device)}
+            onChange={(v) => {
+              const nextProp = device?.properties[v];
+              const nextOps = allowedOpsForProperty(nextProp?.type, true);
+              const nextOp = d.op && nextOps.includes(d.op) ? d.op : undefined;
+              setD({ type: "property", deviceId: d.deviceId, property: v, op: nextOp });
+            }}
+          />
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span className="cap">{t.compare}</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {OPS_ORDER.map((op) => (
+              {ops.map((op) => (
                 <Chip
                   key={op}
                   selected={d.op === op}

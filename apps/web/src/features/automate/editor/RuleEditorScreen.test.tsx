@@ -131,4 +131,87 @@ describe("RuleEditorScreen", () => {
     const select = screen.getByRole("combobox", { name: t.device });
     expect(within(select).getByRole("option", { name: washer.name })).toBeInTheDocument();
   });
+
+  it("allows deleting an existing condition from ConditionSheet", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: `${t.add} ${t.andIf}` }));
+    expect(screen.getByRole("heading", { name: t.addConditionBtn })).toBeInTheDocument();
+    pick(t.device, washer.id);
+    pick(t.property, "power");
+    fireEvent.click(screen.getByRole("button", { name: t.ops.gte }));
+    fireEvent.change(screen.getByLabelText(t.value), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: t.saveSheet }));
+
+    await waitFor(() => expect(screen.queryByText(t.conditionsEmpty)).toBeNull());
+
+    const row = screen.getByText(new RegExp(washer.name));
+    fireEvent.click(row);
+
+    expect(screen.getByRole("heading", { name: t.editConditionBtn })).toBeInTheDocument();
+    const deleteBtn = screen.getByRole("button", { name: t.removeCondition });
+    expect(deleteBtn).toBeInTheDocument();
+
+    fireEvent.click(deleteBtn);
+    await waitFor(() => expect(screen.getByText(t.conditionsEmpty)).toBeInTheDocument());
+  });
+
+  it("allows deleting an existing action from ActionSheet", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: `${t.add} ${t.then}` }));
+    expect(screen.getByRole("heading", { name: t.addActionBtn })).toBeInTheDocument();
+    pick(t.device, washer.id);
+    pick(t.property, "state");
+    fireEvent.click(screen.getByText(t.off));
+    fireEvent.click(screen.getByRole("button", { name: t.saveSheet }));
+
+    await waitFor(() => expect(screen.queryByText(t.actionsEmpty)).toBeNull());
+
+    const row = screen.getByText(new RegExp(washer.name));
+    fireEvent.click(row);
+
+    expect(screen.getByRole("heading", { name: t.editActionBtn })).toBeInTheDocument();
+    const deleteBtn = screen.getByRole("button", { name: t.removeAction });
+    expect(deleteBtn).toBeInTheDocument();
+
+    fireEvent.click(deleteBtn);
+    await waitFor(() => expect(screen.getByText(t.actionsEmpty)).toBeInTheDocument());
+  });
+
+  it("filters comparison operators based on property type (binary vs numeric) in TriggerSheet", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: `${t.add} ${t.when}` }));
+    pick(t.device, washer.id);
+
+    pick(t.property, "state");
+    expect(screen.getByRole("button", { name: t.ops.eq })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.neq })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.changed })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: t.ops.lt })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.lte })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.gt })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.gte })).toBeNull();
+
+    pick(t.property, "power");
+    expect(screen.getByRole("button", { name: t.ops.lt })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.lte })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.gt })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.gte })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.eq })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.changed })).toBeInTheDocument();
+  });
+
+  it("filters comparison operators in ConditionSheet for binary property", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: `${t.add} ${t.andIf}` }));
+    pick(t.device, washer.id);
+    pick(t.property, "state");
+
+    expect(screen.getByRole("button", { name: t.ops.eq })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.ops.neq })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: t.ops.changed })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.lt })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.lte })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.gt })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.ops.gte })).toBeNull();
+  });
 });

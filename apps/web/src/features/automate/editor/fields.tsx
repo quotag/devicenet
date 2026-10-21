@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { CompareOp, Device, PropertyValue } from "@devicenet/shared";
+import type { CompareOp, Device, PropertyType, PropertyValue } from "@devicenet/shared";
 import { Chip } from "@/components/dn/Chip";
 import { Input } from "@/components/dn/Input";
 import { SegmentedTabs } from "@/components/dn/SegmentedTabs";
@@ -8,6 +8,13 @@ import { vi } from "@/i18n/vi";
 const t = vi.s30;
 
 export const OPS_ORDER: CompareOp[] = ["lt", "lte", "eq", "neq", "gte", "gt", "changed"];
+
+export function allowedOpsForProperty(type?: PropertyType, isTrigger = false): CompareOp[] {
+  if (type === "binary" || type === "enum") {
+    return isTrigger ? ["eq", "neq", "changed"] : ["eq", "neq"];
+  }
+  return isTrigger ? OPS_ORDER : OPS_ORDER.filter((o) => o !== "changed");
+}
 
 export function SelectField({
   label,

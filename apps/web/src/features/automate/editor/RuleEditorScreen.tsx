@@ -216,6 +216,11 @@ export function RuleEditorScreen({ target, onClose, saveDeps }: RuleEditorScreen
             ? dispatch({ type: "updateCondition", key: edit.key, condition })
             : dispatch({ type: "addCondition", condition })
         }
+        onDelete={
+          edit?.sheet === "condition" && edit.key
+            ? () => dispatch({ type: "removeCondition", key: edit.key! })
+            : undefined
+        }
       />
       <ActionSheet
         open={edit?.sheet === "action"}
@@ -227,6 +232,11 @@ export function RuleEditorScreen({ target, onClose, saveDeps }: RuleEditorScreen
           edit?.sheet === "action" && edit.key
             ? dispatch({ type: "updateAction", key: edit.key, action })
             : dispatch({ type: "addAction", action })
+        }
+        onDelete={
+          edit?.sheet === "action" && edit.key
+            ? () => dispatch({ type: "removeAction", key: edit.key! })
+            : undefined
         }
       />
       <Sheet open={edit?.sheet === "icon"} onOpenChange={(o) => !o && setEdit(null)} title={t.iconPick}>

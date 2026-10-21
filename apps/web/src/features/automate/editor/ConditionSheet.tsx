@@ -6,7 +6,7 @@ import { Input } from "@/components/dn/Input";
 import { SegmentedTabs } from "@/components/dn/SegmentedTabs";
 import { Sheet } from "@/components/dn/Sheet";
 import { vi } from "@/i18n/vi";
-import { DaysChips, OPS_ORDER, SelectField, SheetActions, ValueField, deviceOptions, propertyOptions } from "./fields";
+import { DaysChips, SelectField, SheetActions, ValueField, allowedOpsForProperty, deviceOptions, propertyOptions } from "./fields";
 import type { DraftLeafCondition } from "./state";
 
 const t = vi.s30;
@@ -18,17 +18,19 @@ export interface ConditionSheetProps {
   value: DraftLeafCondition | undefined;
   devices: Device[];
   onSubmit: (c: DraftLeafCondition) => void;
+  onDelete?: () => void;
 }
 
 export function ConditionSheet(p: ConditionSheetProps) {
+  const isEdit = Boolean(p.value || p.onDelete);
   return (
-    <Sheet open={p.open} onOpenChange={p.onOpenChange} title={t.addConditionBtn}>
+    <Sheet open={p.open} onOpenChange={p.onOpenChange} title={isEdit ? t.editConditionBtn : t.addConditionBtn}>
       {p.open ? <Body {...p} /> : null}
     </Sheet>
   );
 }
 
-function Body({ value, devices, onSubmit, onOpenChange }: ConditionSheetProps) {
+function Body({ value, devices, onSubmit, onOpenChange, onDelete }: ConditionSheetProps) {
   const [d, setD] = useState<DraftLeafCondition>(value ?? { type: "property" });
   const setKind = (i: number) => {
     const k = KINDS[i]!;
@@ -36,6 +38,9 @@ function Body({ value, devices, onSubmit, onOpenChange }: ConditionSheetProps) {
     setD(k === "property" ? { type: "property" } : k === "timeWindow" ? { type: "timeWindow" } : k === "dayOfWeek" ? { type: "dayOfWeek", days: [] } : { type: "sun", when: "afterSunset", offsetMin: 0 });
   };
   const device = d.type === "property" ? devices.find((x) => x.id === d.deviceId) : undefined;
+  const propDef = device && d.type === "property" && d.property ? device.properties[d.property] : undefined;
+  const ops = allowedOpsForProperty(propDef?.type, false) as Exclude<import("@devicenet/shared").CompareOp, "changed">[];
+
   return (
     <SheetActions>
       <SegmentedTabs label={t.addConditionBtn} items={KINDS.map((k) => t.condKind[k])} value={KINDS.indexOf(d.type)} onChange={setKind} />
@@ -53,12 +58,22 @@ function Body({ value, devices, onSubmit, onOpenChange }: ConditionSheetProps) {
               Không có thiết bị khả dụng trong site này
             </span>
           )}
-          <SelectField label={t.property} value={d.property} options={propertyOptions(device)} onChange={(v) => setD({ type: "property", deviceId: d.deviceId, property: v })} />
+          <SelectField
+            label={t.property}
+            value={d.property}
+            options={propertyOptions(device)}
+            onChange={(v) => {
+              const nextProp = device?.properties[v];
+              const nextOps = allowedOpsForProperty(nextProp?.type, false);
+              const nextOp = d.op && nextOps.includes(d.op) ? d.op : undefined;
+              setD({ type: "property", deviceId: d.deviceId, property: v, op: nextOp });
+            }}
+          />
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span className="cap">{t.compare}</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {OPS_ORDER.filter((o) => o !== "changed").map((op) => (
-                <Chip key={op} selected={d.op === op} onClick={() => setD({ ...d, op: op as Exclude<typeof op, "changed"> })}>
+              {ops.map((op) => (
+                <Chip key={op} selected={d.op === op} onClick={() => setD({ ...d, op })}>
                   {t.ops[op]}
                 </Chip>
               ))}
@@ -95,6 +110,18 @@ function Body({ value, devices, onSubmit, onOpenChange }: ConditionSheetProps) {
       >
         {t.saveSheet}
       </Button>
+      {onDelete && (
+        <Button
+          variant="danger"
+          block
+          onClick={() => {
+            onDelete();
+            onOpenChange(false);
+          }}
+        >
+          {t.removeCondition}
+        </Button>
+      )}
     </SheetActions>
   );
 }

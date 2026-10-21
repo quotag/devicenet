@@ -19,17 +19,19 @@ export interface ActionSheetProps {
   devices: Device[];
   scenes: Scene[];
   onSubmit: (a: DraftAction) => void;
+  onDelete?: () => void;
 }
 
 export function ActionSheet(p: ActionSheetProps) {
+  const isEdit = Boolean(p.value || p.onDelete);
   return (
-    <Sheet open={p.open} onOpenChange={p.onOpenChange} title={t.addActionBtn}>
+    <Sheet open={p.open} onOpenChange={p.onOpenChange} title={isEdit ? t.editActionBtn : t.addActionBtn}>
       {p.open ? <Body {...p} /> : null}
     </Sheet>
   );
 }
 
-function Body({ value, devices, scenes, onSubmit, onOpenChange }: ActionSheetProps) {
+function Body({ value, devices, scenes, onSubmit, onOpenChange, onDelete }: ActionSheetProps) {
   const [d, setD] = useState<DraftAction>(value ?? { type: "setProperty" });
   const setKind = (i: number) => {
     const k = KINDS[i]!;
@@ -81,6 +83,18 @@ function Body({ value, devices, scenes, onSubmit, onOpenChange }: ActionSheetPro
       >
         {t.saveSheet}
       </Button>
+      {onDelete && (
+        <Button
+          variant="danger"
+          block
+          onClick={() => {
+            onDelete();
+            onOpenChange(false);
+          }}
+        >
+          {t.removeAction}
+        </Button>
+      )}
     </SheetActions>
   );
 }
