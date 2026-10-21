@@ -23,6 +23,7 @@ service cloud.firestore {
 
     // Root: claim codes — never from clients
     match /claimCodes/{code} { allow read, write: if false; }
+    match /userTenants/{u} { allow read, write: if false; }
 
     match /tenants/{t} {
       allow read: if tenantOk(t);

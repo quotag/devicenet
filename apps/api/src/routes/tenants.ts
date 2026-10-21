@@ -22,19 +22,33 @@ export const userClaims = (tenantId: string) => ({
   },
 });
 
-async function findExistingTenant(uid: string): Promise<{ tenantId: string; siteId: string } | null> {
-  const user = await auth().getUser(uid);
-  let tenantId = user.customClaims?.tenant as string | undefined;
-  if (!tenantId) {
-    // claims are set last; recover from a crash between the commit and setCustomUserClaims
-    const q = await db().collectionGroup('members').where('uid', '==', uid).limit(1).get();
-    tenantId = q.docs[0]?.ref.parent.parent?.id;
+interface UserTenantDoc {
+  tenantId: string;
+  siteId: string;
+  createdAt: number;
+}
+
+export async function findExistingTenant(uid: string): Promise<{ tenantId: string; siteId: string } | null> {
+  // Check userTenants collection first (server-only mapping doc)
+  const utDoc = await db().doc(`userTenants/${uid}`).get();
+  if (utDoc.exists) {
+    const data = utDoc.data() as UserTenantDoc;
+    return { tenantId: data.tenantId, siteId: data.siteId };
   }
-  if (!tenantId) return null;
-  const sites = await db().collection(`tenants/${tenantId}/sites`).orderBy('order').limit(1).get();
-  const siteId = sites.docs[0]?.id;
-  if (!siteId) return null;
-  return { tenantId, siteId };
+
+  // Fallback if tenantId exists on claims but not in userTenants (e.g. legacy/migrated)
+  const user = await auth().getUser(uid);
+  const tenantId = user.customClaims?.tenant as string | undefined;
+  if (tenantId) {
+    const sites = await db().collection(`tenants/${tenantId}/sites`).orderBy('order').limit(1).get();
+    const siteId = sites.docs[0]?.id;
+    if (siteId) {
+      await db().doc(`userTenants/${uid}`).set({ tenantId, siteId, createdAt: Date.now() });
+      return { tenantId, siteId };
+    }
+  }
+
+  return null;
 }
 
 export async function tenantsRoutes(app: FastifyInstance) {
@@ -43,47 +57,61 @@ export async function tenantsRoutes(app: FastifyInstance) {
     if (!body.success) return sendError(reply, 400, 'INVALID_BODY', 'invalid body');
     const uid = req.uid!;
 
-    const existing = await findExistingTenant(uid);
-    if (existing) {
-      const claims = (await auth().getUser(uid)).customClaims;
-      if (claims?.tenant !== existing.tenantId || claims?.role !== 'user') {
-        await auth().setCustomUserClaims(uid, userClaims(existing.tenantId));
+    const userTenantRef = db().doc(`userTenants/${uid}`);
+
+    // Atomic transaction prevents race conditions when concurrent requests bootstrap the same user
+    const result = await db().runTransaction(async (tx) => {
+      const utSnap = await tx.get(userTenantRef);
+      if (utSnap.exists) {
+        const data = utSnap.data() as UserTenantDoc;
+        return { tenantId: data.tenantId, siteId: data.siteId, created: false };
       }
-      return { ...existing, created: false };
+
+      const now = Date.now();
+      const tenantId = `tenant_${ulid()}`;
+      const siteId = `site_${ulid()}`;
+      const t = db().doc(`tenants/${tenantId}`);
+
+      tx.create(t, {
+        id: tenantId,
+        name: req.displayName || 'Nhà của tôi',
+        ownerUid: uid,
+        createdAt: now,
+        plan: 'home',
+      });
+      tx.create(t.collection('members').doc(uid), {
+        uid,
+        role: 'owner',
+        email: req.email ?? `${uid}@unknown.invalid`,
+        ...(req.displayName ? { displayName: req.displayName } : {}),
+        ...(req.photoUrl ? { photoUrl: req.photoUrl } : {}),
+        joinedAt: now,
+      });
+      tx.create(t.collection('sites').doc(siteId), {
+        id: siteId,
+        name: 'Nhà',
+        timezone: body.data.timezone ?? 'Asia/Ho_Chi_Minh',
+        ...(body.data.lat !== undefined ? { lat: body.data.lat } : {}),
+        ...(body.data.lng !== undefined ? { lng: body.data.lng } : {}),
+        order: 0,
+        createdAt: now,
+      });
+      tx.create(userTenantRef, {
+        tenantId,
+        siteId,
+        createdAt: now,
+      });
+
+      return { tenantId, siteId, created: true };
+    });
+
+    const user = await auth().getUser(uid);
+    const claims = user.customClaims;
+    if (claims?.tenant !== result.tenantId || claims?.role !== 'user') {
+      await auth().setCustomUserClaims(uid, userClaims(result.tenantId));
     }
 
-    const now = Date.now();
-    const tenantId = `tenant_${ulid()}`;
-    const siteId = `site_${ulid()}`;
-    const t = db().doc(`tenants/${tenantId}`);
-    const batch = db().batch();
-    batch.create(t, {
-      id: tenantId,
-      name: req.displayName || 'Nhà của tôi',
-      ownerUid: uid,
-      createdAt: now,
-      plan: 'home',
-    });
-    batch.create(t.collection('members').doc(uid), {
-      uid,
-      role: 'owner',
-      email: req.email ?? `${uid}@unknown.invalid`,
-      ...(req.displayName ? { displayName: req.displayName } : {}),
-      ...(req.photoUrl ? { photoUrl: req.photoUrl } : {}),
-      joinedAt: now,
-    });
-    batch.create(t.collection('sites').doc(siteId), {
-      id: siteId,
-      name: 'Nhà',
-      timezone: body.data.timezone ?? 'Asia/Ho_Chi_Minh',
-      ...(body.data.lat !== undefined ? { lat: body.data.lat } : {}),
-      ...(body.data.lng !== undefined ? { lng: body.data.lng } : {}),
-      order: 0,
-      createdAt: now,
-    });
-    await batch.commit();
-    await auth().setCustomUserClaims(uid, userClaims(tenantId));
-    return { tenantId, siteId, created: true };
+    return result;
   });
 
   // D-16 placeholder: no deletion performed in v1 (UI hides it)

@@ -56,6 +56,32 @@ describe('POST /v1/tenants/bootstrap', () => {
     expect((await db().collection('tenants').get()).size).toBe(1);
   });
 
+  it('10 concurrent bootstrap requests for same uid result in exactly 1 tenant and 1 member', async () => {
+    const u = await createUser();
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => bootstrap(u.idToken)),
+    );
+    for (const r of results) {
+      expect(r.statusCode).toBe(200);
+    }
+    const bodies = results.map((r) => r.json());
+    const first = bodies[0];
+    for (const b of bodies) {
+      expect(b.tenantId).toBe(first.tenantId);
+      expect(b.siteId).toBe(first.siteId);
+    }
+    const createdCount = bodies.filter((b) => b.created).length;
+    expect(createdCount).toBe(1);
+
+    const tenants = await db().collection('tenants').get();
+    expect(tenants.size).toBe(1);
+    const members = await db().collection(`tenants/${first.tenantId}/members`).get();
+    expect(members.size).toBe(1);
+    const userTenant = await db().doc(`userTenants/${u.uid}`).get();
+    expect(userTenant.exists).toBe(true);
+    expect(userTenant.get('tenantId')).toBe(first.tenantId);
+  });
+
   it('recovers if claims were never set (crash after commit)', async () => {
     const u = await createUser();
     const a = (await bootstrap(u.idToken)).json();
