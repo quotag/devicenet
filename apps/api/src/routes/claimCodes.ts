@@ -1,5 +1,6 @@
 import type { FastifyContextConfig, FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { ClaimCode } from '@devicenet/shared';
 import { db } from '../firebase.js';
 import { sendError } from '../errors.js';
@@ -14,6 +15,7 @@ const Body = z.object({
 });
 
 const ALREADY_EXISTS = 6; // gRPC status code returned by Firestore create() on collision
+const TTL_AFTER_EXPIRES_MS = 24 * 60 * 60 * 1000; // 24h retention after expiry for audit/recovery
 
 /** POST /v1/hubs/claim-codes — unauthenticated, called by an unclaimed hub. */
 export async function claimCodesRoutes(app: FastifyInstance) {
@@ -23,11 +25,14 @@ export async function claimCodesRoutes(app: FastifyInstance) {
 
     for (let attempt = 0; attempt < 5; attempt++) {
       const now = Date.now();
+      const expiresAt = now + CLAIM_TTL_MS;
+      const expireAt = Timestamp.fromMillis(expiresAt + TTL_AFTER_EXPIRES_MS);
       const doc: z.infer<typeof ClaimCode> = {
         code: newClaimCode(),
         hubPubKey: body.data.hubPubKey,
         createdAt: now,
-        expiresAt: now + CLAIM_TTL_MS,
+        expiresAt,
+        expireAt,
         used: false,
       };
       try {
@@ -36,7 +41,7 @@ export async function claimCodesRoutes(app: FastifyInstance) {
         if ((e as { code?: number }).code === ALREADY_EXISTS) continue;
         throw e;
       }
-      return reply.status(201).send({ code: doc.code, expiresAt: doc.expiresAt, pollEverySec: 3 });
+      return reply.status(201).send({ code: doc.code, expiresAt: doc.expiresAt, pollEverySec: 5 });
     }
     return sendError(reply, 503, 'UNAVAILABLE', 'could not allocate a claim code');
   });

@@ -81,11 +81,12 @@ describe('POST /v1/hubs/claim-codes', () => {
   it('creates a 15-minute single-use code', async () => {
     const before = Date.now();
     const c = await newCode();
-    expect(c.pollEverySec).toBe(3);
+    expect(c.pollEverySec).toBe(5);
     expect(c.expiresAt).toBeGreaterThanOrEqual(before + 15 * 60_000);
     expect(c.expiresAt).toBeLessThanOrEqual(Date.now() + 15 * 60_000);
     const doc = (await db().doc(`claimCodes/${c.code}`).get()).data();
     expect(ClaimCode.parse(doc)).toMatchObject({ code: c.code, hubPubKey: c.kp.pk, used: false, expiresAt: c.expiresAt });
+    expect(doc?.expireAt).toBeDefined();
   });
 
   it('rejects an invalid public key', async () => {

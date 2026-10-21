@@ -132,7 +132,7 @@ export interface paths {
                         "application/json": {
                             code: string;
                             expiresAt: number;
-                            /** @example 3 */
+                            /** @example 5 */
                             pollEverySec: number;
                         };
                     };

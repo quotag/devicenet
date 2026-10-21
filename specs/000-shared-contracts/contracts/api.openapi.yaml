@@ -79,7 +79,7 @@ paths:
                 properties:
                   code: { type: string, pattern: "^[A-HJ-NP-Z2-9]{8}$" }
                   expiresAt: { type: integer }
-                  pollEverySec: { type: integer, example: 3 }
+                  pollEverySec: { type: integer, example: 5 }
   /v1/hubs/claim-codes/{code}/credential:
     get:
       tags: [hubs]

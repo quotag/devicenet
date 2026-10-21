@@ -155,6 +155,7 @@ export const ClaimCode = z.object({
   hubPubKey: z.string(), // base64 X25519 or RSA-OAEP public key
   createdAt: EpochMs,
   expiresAt: EpochMs, // createdAt + 15 min (decision: 15, not 10)
+  expireAt: z.unknown().optional(), // Firestore TTL Timestamp (expiresAt + 24h)
   used: z.boolean(),
   /** set at claim: encrypted credential blob the hub polls for; deleted after first successful GET */
   credential: z.string().optional(),
