@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "demo-devicenet",
-    "prod": "REPLACE_WITH_GCP_PROJECT_ID"
+    "default": "assistantpc-e0052",
+    "prod": "assistantpc-e0052"
   }
 }

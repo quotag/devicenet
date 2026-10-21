@@ -1,7 +1,4 @@
 {
-  "projects": {
-    "default": "demo-devicenet"
-  },
   "firestore": {
     "rules": "infra/firestore.rules",
     "indexes": "infra/firestore.indexes.json"
