@@ -80,4 +80,20 @@ describe('Registry', () => {
     expect(new Registry({ repo: store.devices }).load()).toBe(0);
     store.close();
   });
+
+  it('restart with existing devices preserves friendlyName matching deviceId (C7)', () => {
+    const store = openStore(':memory:');
+    const r1 = new Registry({ repo: store.devices });
+    const d = makeDevice();
+    r1.insert(d);
+    expect(r1.getByFriendlyName(d.id)?.device.id).toBe(d.id);
+
+    // Simulate restart
+    const r2 = new Registry({ repo: store.devices });
+    expect(r2.load()).toBe(1);
+    const loaded = r2.get(d.id);
+    expect(loaded?.friendlyName).toBe(d.id);
+    expect(r2.getByFriendlyName(d.id)?.device.id).toBe(d.id);
+    store.close();
+  });
 });

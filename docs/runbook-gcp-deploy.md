@@ -324,6 +324,10 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 2. Đặt ngân sách: **15 USD/tháng**.
 3. Cài đặt gửi thông báo qua email khi đạt 50%, 80% và 100%.
 
+### 4. Xử lý Hub bị kẹt khi claim:
+Nếu quá trình claim thành công trên Cloud nhưng Hub gặp sự cố tắt nguồn trước khi kịp ghi `credentials.json`, mã claim đã được giải mã 1 lần và tiêu thụ trên server nên không thể lấy lại.
+**Cách xử lý:** Vào Web App > Cài đặt Hub > Xóa Hub bị kẹt trên Cloud. Sau đó mở `http://<ip-hub>:8080/setup` để lấy mã claim mới và liên kết lại bình thường.
+
 ---
 
 ## 6. Mô hình bảo mật & Rủi ro chấp nhận được (Security & Trust Model)
