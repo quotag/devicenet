@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-devicenet"
+    "default": "demo-devicenet",
+    "prod": "REPLACE_WITH_GCP_PROJECT_ID"
   }
 }

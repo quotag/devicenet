@@ -1,43 +1,27 @@
 {
-  "indexes": [
+  "indexes": [],
+  "fieldOverrides": [
     {
-      "collectionGroup": "devices",
-      "queryScope": "Collection",
-      "fields": [
+      "collectionGroup": "private",
+      "fieldPath": "secretHash",
+      "indexes": [
         {
-          "fieldPath": "hubId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "rules",
-      "queryScope": "Collection",
-      "fields": [
-        {
-          "fieldPath": "hubId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "enabled",
-          "order": "ASCENDING"
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
         }
       ]
     },
     {
       "collectionGroup": "events",
-      "queryScope": "Collection",
-      "fields": [
-        {
-          "fieldPath": "ts",
-          "order": "DESCENDING"
-        }
-      ]
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "claimCodes",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
     }
-  ],
-  "fieldOverrides": []
+  ]
 }
