@@ -74,3 +74,20 @@ Dev "cloud broker" local = Mosquitto/aedes thứ 2 không auth + script dev mirr
 - ✅ TẤT CẢ BATCH 001 + 002 XONG. Kiểm chứng cuối trên main (6013150): `pnpm -r typecheck` xanh; test: shared 118, hub-agent 234, api 42 (+ emu 45 ở B19), dev-broker 4, web 268 — tất cả xanh; `pnpm smoke` PASS 31.9 s. Sửa flaky app.test (asyncUtilTimeout 5 s).
 - CHƯA kiểm thật: dev:real với dongle + TS011F; click UI trên trình duyệt; terraform validate; SEA exe build; docker compose config; Ctrl+C console thật.
 - 2026-10-19: Anh đã duyệt toàn bộ các quyết định kỹ thuật: (1) Chấp nhận `node:sqlite` làm mặc định/fallback; (2) Chốt coalescing 200 ms (realtime §2.5); (3) Duyệt B18/B19 RuleEditor logic + chuỗi `vi.s30` + draft `enabled:true`. Toàn bộ doc/spec/OQ đã đồng bộ. Sẵn sàng cho kiểm thử thực tế với USB Dongle (`pnpm dev:real`) và Web UI.
+- 2026-10-20..2026-10-21: Field Hardening & Real Device Integration (14 commits sau 62d605a, kết thúc tại 2358c18):
+  * `6d29ba8`: Auth session bootstrap header, VITE_FIREBASE_AUTH_DOMAIN fallback, popup-blocked redirect fallback, quiet ignore closed popup.
+  * `93b1b08`: GCP Cloud Run runbook deployment (`docs/runbook-gcp-deploy.md`).
+  * `fe8393e` & `80534f2`: Bộ cài đặt native Linux & Windows (SEA bundle, PowerShell packaging `package-agent-win.mjs`, NSSM/systemd, VID:PID dongle probe).
+  * `1950584`: Me screen, HubDetailScreen với checkbox unclaim confirmation, site-room hierarchy & activity history.
+  * `83742ec`: Realtime MQTT events inbound pipeline (`inbound.ts`) & LAN config HTTP 304 ETag polling (`LanConfigSource.ts`).
+  * `927d078`: Automation engine output target state awareness, initial timer evaluation on boot/recompile, chained timeout > 24 ngày (`MAX_TIMEOUT_MS = 24 * 86_400_000`).
+  * `196981a` & `abb41ea`: Pre-interviewed device discovery khi `pairing.start`, re-pairing identity migration, driver cache clearing, SQLite conflict deletion cho tombstoned removed records.
+  * `f7b4c8e`: Hub claim reset LAN endpoint `POST /setup/reset` và auto-unclaim listener khi xóa hub trên cloud (`onHubDeleted`).
+  * `d87d04e`: Tắt tab Tự động hóa (Automate) trong quá trình onboarding & hướng dẫn URL setup LAN.
+  * `a644170`: Device lifecycle manager (`lifecycle.ts`) và Z2M `removeDevice` implementation.
+  * `3e0ad13`: Auto-healing fallback cho `siteId` mồ côi/lạc hậu trong RuleEditor & config sources, placeholder cho thiết bị rỗng.
+  * `2358c18`: Nút xóa điều kiện/hành động RuleEditor, lọc toán tử theo kiểu dữ liệu thuộc tính, giữ trạng thái sub-tab Automate khi chuyển tab.
+- ✅ ĐỒNG BỘ SPEC/DOC/TASKS (speckit-deep audit):
+  * Cập nhật đầy đủ 001 (backend-hub-cloud) & 002 (frontend-pwa): `spec.md`, `plan.md`, `data-model.md`, `tasks.md` (thêm B23 cho 001, B26 cho 002), `open-questions.md`, và tạo mới `ledger.md` (153 atomic facts: 83 backend, 70 frontend, độ phủ 100%).
+  * Trạng thái test & typecheck: `pnpm -r typecheck` 5/5 package sạch; `pnpm test` tổng cộng 686 tests xanh (shared: 118, hub-agent: 245, api: 42, dev-broker: 4, web: 277).
+

@@ -33,3 +33,10 @@ None. All questions resolved.
 
 ## OQ-B19-1 — S-30 strings not in artboards (RESOLVED 2026-10-19)
 Sheet labels beyond the 3 artboards (condition kinds, action sheet fields, day chips, offset/level labels, icon picker, run-step status words) in `vi.s30` and icon picker using `getIconPickerList()` (8 device icons) are APPROVED by the owner. S-30 is route `/automate/editor` (target handed via `editorNav.ts`; reload returns to S-02).
+
+## Field Hardening (post-62d605a)
+- RESOLVED OQ-POST-01: Firebase Auth domain & popup blockers. `VITE_FIREBASE_AUTH_DOMAIN` supported. `signInWithGoogle` falls back to `signInWithRedirect` when popup is blocked. Quietly ignores user-closed popup (`auth/popup-closed-by-user`, `auth/cancelled-popup-request`).
+- RESOLVED OQ-POST-02: Automate tab state during onboarding. `TabBar` and `DesktopShell` disable the Automate tab when user has no hubs or devices, re-enabling it once onboarding completes.
+- RESOLVED OQ-POST-03: Rule Editor condition/action deletion & operator filtering. Added delete action in sheets. Comparison operators are filtered based on property type (`allowedOpsForProperty`).
+- RESOLVED OQ-POST-04: Stale siteId auto-healing. Automatically fall back to first valid site when `uiStore.siteId` is stale, and auto-heal on config load.
+

@@ -27,12 +27,12 @@ Delivery is split into **M-Local** (runnable against Firebase emulators + local 
 
 | What | Cloud dev (`pnpm --filter web dev`, :5173) | LAN build (`build:lan`, served by hub-agent :8080) |
 |---|---|---|
-| Firebase | `demo-devicenet`; `VITE_USE_EMULATOR=1` → `connectAuthEmulator(http://127.0.0.1:9099)`, `connectFirestoreEmulator(127.0.0.1, 8085)` | not bundled |
+| Firebase | `demo-devicenet`; `VITE_USE_EMULATOR=1` → `connectAuthEmulator(http://127.0.0.1:9099)`, `connectFirestoreEmulator(127.0.0.1, 8085)`; `VITE_FIREBASE_AUTH_DOMAIN` hỗ trợ custom auth domain | not bundled |
 | api | `VITE_API_URL=http://127.0.0.1:3000` | not used |
-| MQTT | `VITE_MQTT_URL=ws://localhost:8084/mqtt` (full URL, mimics EMQX path; dev cloud broker accepts any path, aedes, **no auth**); app still sends `username=uid`, `password=idToken` (ignored in dev, required on EMQX) | `ws://${location.hostname}:9001` (Mosquitto, no auth) |
-| Config | Firestore `onSnapshot` | `GET /api/config` every 30 s with `If-None-Match` |
+| MQTT | `VITE_MQTT_URL=ws://localhost:8084/mqtt` (full URL, mimics EMQX path; dev cloud broker accepts any path, aedes, **no auth**); app still sends `username=uid`, `password=idToken` (ignored in dev, required on EMQX). Inbound events `t/.../events/+` tự động parse và dispatch | `ws://${location.hostname}:9001` (Mosquitto, no auth) |
+| Config | Firestore `onSnapshot` | `GET /api/config` every 30 s with `If-None-Match` (hỗ trợ HTTP 304 giữ nguyên state) |
 
-Env files: `apps/web/.env.development` (cloud + emulator), `apps/web/.env.lan` (`VITE_MODE=lan`), `.env.example` documented. No NEEDS CLARIFICATION remain (resolved in research.md; residual coordination items in open-questions.md).
+Env files: `apps/web/.env.development` (cloud + emulator), `apps/web/.env.lan` (`VITE_MODE=lan`), `.env.example` documented (kèm `VITE_FIREBASE_AUTH_DOMAIN`). Public installers hosted at `public/agent/install.{sh,ps1}`. Rule Editor hỗ trợ xóa condition/action, lọc operator theo data type, và auto-heal siteId.
 
 ## Constitution Check
 

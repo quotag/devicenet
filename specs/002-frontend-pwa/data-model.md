@@ -9,9 +9,9 @@ Wire payloads (MQTT), Firestore documents, rule/scene schemas, ids and timeouts 
 |---|---|---|
 | `mode` | `"cloud" \| "lan"` | from `VITE_MODE` |
 | `status` | `"booting" \| "signedOut" \| "bootstrapping" \| "ready"` | guards read this |
-| `user` | `{uid, email, displayName?, photoUrl?} \| null` | cloud only |
+| `user` | `{uid, email, displayName?, photoUrl?} \| null` | cloud only; nạp trước khi gọi bootstrap |
 | `tenantId` | `TenantId \| null` | claim `tenant` / `/api/config.tenantId` |
-| `idToken` | `string \| null` | MQTT password (cloud) |
+| `idToken` | `string \| null` | MQTT password (cloud); nạp trước khi gọi bootstrap để gửi header `Authorization: Bearer <token>` |
 Transitions: `booting → signedOut → bootstrapping → ready`; `ready → signedOut` on sign-out (all stores reset).
 
 ### `connection`
@@ -47,7 +47,7 @@ Derived per tile: `display(key) = pending?.[key]?.value ?? byId.values[key]`, `i
 ### `ui`
 | Field | Type | Notes |
 |---|---|---|
-| `siteId` | `SiteId \| null` | current site (default first) — persisted localStorage |
+| `siteId` | `SiteId \| null` | current site (default first) — persisted localStorage. Auto-heal: nếu siteId không tồn tại trong `sites`, tự fallback về `sites[0].id` |
 | `filter` | `"all" \| RoomId` | Home chips |
 | `arranging` | `boolean` | post-M-Local |
 | `sheet` | discriminated union `{kind:"sh2", ctx:"home"\|"automate"} \| {kind:"sh5", mode, …} \| …` | rendered by SheetHost |
@@ -56,6 +56,11 @@ Derived per tile: `display(key) = pending?.[key]?.value ?? byId.values[key]`, `i
 
 ### `toast`
 `current: {kind: "timeout" | "error" | "update", text: string, action?: {label, run}} | null` — one at a time (FR-F14); auto-hide handled by Toast component.
+
+## Rule Editor State (`src/features/automate/editor/`)
+- `EditorDraft`: `{id, mode: "rule" | "scene", name, icon, enabled, trigger, conditions, actions, rev}`.
+- Deletion: `removeCondition(key)` và `removeAction(key)` cho phép xóa từng item khỏi mảng.
+- Operator filter: `allowedOpsForProperty(propType, isTrigger)` giới hạn phép so sánh hợp lệ (binary: `eq`/`neq`; numeric: so sánh số + khoảng; enum: `eq`/`neq`).
 
 ## View models (`src/lib/deviceView.ts`, pure)
 - `toggleKey(device)` = `device.toggleProperty` ?? first writable `binary` property.

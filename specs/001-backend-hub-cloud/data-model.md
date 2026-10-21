@@ -19,7 +19,7 @@
 | Table | Columns | Purpose / rules |
 |---|---|---|
 | `meta` | `key TEXT PK, value TEXT` | `schemaVersion`, `lastHeartbeatAt` (OQ-6), `lastConfigSyncAt`. |
-| `devices` | `id PK (dev_…), external_id UNIQUE (ieee), doc JSON (Device), values JSON, at JSON, online INT, last_seen INT, synced INT` | Cold-start registry. `synced=0` → reconciler rewrites Firestore. |
+| `devices` | `id PK (dev_…), external_id UNIQUE (ieee), doc JSON (Device), values JSON, at JSON, online INT, last_seen INT, synced INT` | Cold-start registry. `synced=0` → reconciler rewrites Firestore. Re-pairing conflict resolution: xóa bản ghi cũ có `status='removed'` cùng `external_id` trước khi upsert. |
 | `config_snapshot` | `kind ('site'\|'rooms'\|'devices'\|'rules'\|'scenes'\|'layout') PK, json, etag, cached_at` | Serves `/api/config` + engine cold start. |
 | `history` | `device_id, property, ts, value REAL`; index `(device_id, property, ts)` | ≤1 row/10 s/property; 7-day retention, hourly cleanup. |
 | `events` | `id PK (evt_…), ts, type, json (HubEvent), uploaded INT` | 30-day retention; source of `/api/events` and the Firestore uploader. |
@@ -29,21 +29,23 @@ Migrations: numbered SQL in `src/store/migrations.ts`, applied at boot inside on
 
 ## 3. Hub in-memory state
 
-- **Registry entry** (`core/registry`): `{device: Device, values, at, online, lastSeen, lqi?}` keyed by `deviceId`, plus `externalId → deviceId` and `friendlyName → deviceId` maps. Values merged only for keys in `device.properties` (FR-H04).
+- **Registry entry** (`core/registry`): `{device: Device, values, at, online, lastSeen, lqi?}` keyed by `deviceId`, plus `externalId → deviceId` và `friendlyName → deviceId` maps. Values merged only for keys in `device.properties` (FR-H04).
 - **Publisher**: `seq` counter (reset at boot), last-published snapshot per device for change detection, coalescer timers.
 - **Cmd dedupe**: LRU `cmd.id → expiresAt` (60 s).
 - **Set queue**: per-device promise chain (concurrency 1).
-- **Pairing**: `{active, startedAt, expiresAt, found[], timer}`; mutex for `pairing.*`.
-- **Engine** (post M-Local): `Map<"dev.prop", CompiledRule[]>`, per-rule `{prev, forTimer, appliedRev}`, active runs `runId → {cancel}`.
+- **Pairing**: `{active, startedAt, expiresAt, found[], timer}`; mutex cho `pairing.*`. Quét `knownDevices` khi start để phát hiện thiết bị đã interview.
+- **Engine** (post M-Local): `Map<"dev.prop", CompiledRule[]>`, per-rule `{prev, forTimer, appliedRev}`, active runs `runId → {cancel}`. Target state awareness: không kích hoạt nếu thuộc tính hành động đã đạt targetValue. Scheduler phân đoạn chained timeouts khi delay > 24 ngày (`MAX_TIMEOUT_MS`).
 
 ## 4. State machines
 
-**Hub lifecycle**: `unclaimed` (key pair, request code, poll 3 s, new code every 15 min) → `claimed` (credentials.json present) → `online-cloud` / `offline-cloud` (bridge link state; independent of LAN). `devicenet-agent reset` → `unclaimed` (keeps Z2M db and `devices` table; Firestore devices recreated after next claim per FR-H06 recovery).
+**Hub lifecycle**: `unclaimed` (key pair, request code, poll 3 s, new code every 15 min) → `claimed` (credentials.json present) → `online-cloud` / `offline-cloud` (bridge link state; independent of LAN).
+- `devicenet-agent reset` / `POST /setup/reset` (LAN setup) → `unclaimed` (xóa credentials, giữ Z2M db và `devices` table).
+- **Auto-unclaim**: Khi Firestore xóa doc hub (`onHubDeleted`) hoặc token bị từ chối 401/404 → tự động gọi `goUnclaimed()`, ngắt bridge cloud, xóa credentials và quay về `unclaimed` phục vụ LAN `/setup`.
 Before claim: supervisor, Z2M, driver, local broker, `/setup`, `/api/health` run; no `t/…` topics are published (tenant unknown); pairing refused (D-12).
 
-**Device** (`Device.status`, contract): hub creates `new` → app sets `active` → hub sets `removed` (+ `removedAt`, retained state cleared, referencing rules/scenes `broken`).
+**Device** (`Device.status`, contract): hub creates `new` → app sets `active` → hub sets `removed` (+ `removedAt`, retained state cleared, referencing rules/scenes `broken`). Re-pair cùng IEEE: di chuyển identity sang site/hub hiện tại, xóa bản ghi removed cũ trong DB, chuyển về `new` và phát `device.found`.
 
-**Pairing**: `idle` → `pairing.start` → `active(expiresAt)` → (timer | `pairing.stop` | Z2M permit_join false) → `idle` (`permit_join {time:0}` sent defensively).
+**Pairing**: `idle` → `pairing.start` (quét `knownDevices`, thêm thiết bị `new`/đã interview vào `found`) → `active(expiresAt)` → (timer | `pairing.stop` | Z2M permit_join false) → `idle` (`permit_join {time:0}` sent defensively).
 
 **Command handling**: received → dedupe → `CommandEnvelope.safeParse` (fail → ack `invalid`) → handler with 5 s guard (late → ack `timeout`) → ack.
 

@@ -262,6 +262,18 @@ Read: spec §6.
 - [X] T121 [model:sonnet] api Dockerfile for Cloud Run — `apps/api/Dockerfile`
 - **Verify**: `pnpm -r typecheck && pnpm test`
 
+### B23 Field Hardening & Real Device Hardening (post-62d605a) — G8
+Read: commits 927d078, 196981a, f7b4c8e, a644170, 80534f2, abb41ea, 93b1b08.
+- [X] T122 [US9] [model:opus] Output target state awareness (skip redundant driver command if already target state) & initial duration timer evaluation on boot/rebuild — `apps/hub-agent/src/automation/{engine.ts,compile.ts}`, `test/automation/engine.test.ts`
+- [X] T123 [US10] [model:opus] Chained timeouts for delays > 24 days without Node.js 32-bit int overflow (`MAX_TIMEOUT_MS = 24 * 86_400_000`) — `apps/hub-agent/src/automation/scheduler.ts`, `test/automation/scheduler.test.ts`
+- [X] T124 [US3/US14] [model:sonnet] Pairing re-discovery: scan `driver.knownDevices()` on `pairing.start`, re-interview detection & identity migration across sites/hubs — `apps/hub-agent/src/core/pairing.ts`, `test/core/pairing.test.ts`
+- [X] T125 [US14] [model:sonnet] SQLite conflict resolution: delete tombstoned `removed` records before re-inserting newly paired device with same IEEE — `apps/hub-agent/src/store/devices.ts`
+- [X] T126 [US14] [model:sonnet] Driver device & friendly name cache clearing on leave/remove + Z2M bridge device removal — `apps/hub-agent/src/drivers/Driver.ts`, `apps/hub-agent/src/drivers/zigbee2mqtt/driver.ts`, `apps/hub-agent/src/core/lifecycle.ts`
+- [X] T127 [US2/US15] [model:sonnet] Hub auto-unclaim on cloud deletion (`onHubDeleted` / 401/404) and LAN setup reset (`POST /setup/reset`) — `apps/hub-agent/src/sync/firestoreStore.ts`, `apps/hub-agent/src/claim/claimClient.ts`, `apps/hub-agent/src/lan/routes/setup.ts`, `apps/hub-agent/src/main.ts`
+- [X] T128 [P13] [model:sonnet] Production Linux & Windows installer one-liners, PowerShell packaging, VID:PID dongle auto-detection, and SEA build script — `installers/linux/install.sh`, `installers/windows/install.ps1`, `scripts/package-agent-win.mjs`, `installers/windows/build-sea.mjs`
+- [X] T129 [P12] [model:sonnet] GCP production deployment runbook for Cloud Run, Firebase, GCE VM, EMQX 5.8 OSS, Caddy TLS, and Secret Manager — `docs/runbook-gcp-deploy.md`
+- **Verify**: `pnpm -r typecheck && pnpm test` ✅ (686 passed)
+
 ---
 
 ## Dependencies & strategy

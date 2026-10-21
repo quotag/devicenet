@@ -389,11 +389,23 @@ Artboards: `design/S01-Toast.dc.html` (kind `update`); spec §5, §7.
 
 **Verify**: `pnpm --filter web test && pnpm --filter web typecheck && pnpm --filter web build && pnpm --filter web build:lan`
 
+### B26 — Field Hardening & Real Device UX (post-62d605a) · [model:sonnet] · G11
+Owns: auth flow, install scripts, me/history, realtime events, onboarding nav, editor refinements.
+- [X] T150 [US01] [model:sonnet] Firebase Auth custom auth domain (`VITE_FIREBASE_AUTH_DOMAIN`), popup-blocked redirect fallback, silent cancel handling, and Bearer token in bootstrap request — `src/env.ts`, `src/lib/firebase.ts`, `src/features/auth/{firebaseAuth.ts,LoginScreen.tsx,session.ts}`, `src/features/auth/session.test.ts`
+- [X] T151 [US02] [model:sonnet] Hub install scripts public hosting & copy UI for Linux/Windows — `public/agent/install.{sh,ps1}`, `src/features/onboarding/hub/StepInstall.tsx`, `src/features/onboarding/hub/AddHub.test.tsx`, `src/i18n/vi.ts`
+- [X] T152 [US15/US16] [model:sonnet] Live HubDetailScreen with unclaim confirmation, site-room hierarchy view, activity history grouping by date & error filter chips — `src/features/me/{MeScreen.tsx,HubDetailScreen.tsx,HistoryScreen.tsx,history.ts}`, `src/features/me/Me.test.tsx`
+- [X] T153 [US04/US12] [model:sonnet] Realtime MQTT event ingestion pipeline & HTTP 304 ETag optimization for LAN polling — `src/transport/inbound.ts`, `src/transport/lan/LanConfigSource.ts`, `src/stores/config.ts`
+- [X] T154 [US02] [model:sonnet] Disable Automate tab during onboarding & setup URL guidance — `src/components/dn/TabBar.tsx`, `src/app/DesktopShell.tsx`, `src/features/onboarding/hub/StepCode.tsx`, `src/app/desktop.test.tsx`
+- [X] T155 [US09] [model:sonnet] Stale siteId auto-healing & empty device placeholders with captions in Rule Editor sheets — `src/features/automate/editor/{RuleEditorScreen.tsx,TriggerSheet.tsx,ConditionSheet.tsx,ActionSheet.tsx,fields.tsx}`, `src/transport/cloud/FirestoreConfigSource.ts`, `src/transport/lan/LanConfigSource.ts`
+- [X] T156 [US09] [model:sonnet] Delete condition/action buttons, property-type operator filtering, and preserve Automate tab state — `src/features/automate/editor/{RuleEditorScreen.tsx,ConditionSheet.tsx,ActionSheet.tsx,fields.tsx,RuleEditorScreen.test.tsx}`, `src/app/router.tsx`, `src/features/automate/{AutomateScreen.tsx,Automate.test.tsx}`, `src/stores/ui.ts`
+
+**Verify**: `pnpm --filter web test && pnpm --filter web typecheck && pnpm --filter web build && pnpm --filter web build:lan` ✅ (277 tests passed)
+
 ---
 
 ## Dependencies & execution order
 
-- G0 B01 → G1 {B02, B03, B04, B05} → G2 {B06 (needs B04+B05), B07 (B04), B08, B09 (B02+B03)} → G3 B10 → G4 B11 → G5 {B12, B13, B14, B15} → G6 B16 (**M-Local done**) → G7 {B17, B18, B20, B22, B23} → G8 {B19 (B17+B18), B21 (B17+B20)} → G9 B24 → G10 B25.
+- G0 B01 → G1 {B02, B03, B04, B05} → G2 {B06 (needs B04+B05), B07 (B04), B08, B09 (B02+B03)} → G3 B10 → G4 B11 → G5 {B12, B13, B14, B15} → G6 B16 (**M-Local done**) → G7 {B17, B18, B20, B22, B23} → G8 {B19 (B17+B18), B21 (B17+B20)} → G9 B24 → G10 B25 → G11 B26.
 - Shared files touched by several batches use **append-only** rules: `src/i18n/vi.ts` (own namespace), `src/transport/writes.ts` and `FirestoreConfigSource.ts` (add functions/listeners, don't edit others'). Parallel batches touching them rebase before verify.
 - User stories: US-01 (B11) → US-02 (B12) → US-03 (B13) → US-04/05/15 (B14) and US-13 (B15) are independent once B11 is done; US-12 LAN (B16) needs B14.
 
@@ -401,4 +413,5 @@ Artboards: `design/S01-Toast.dc.html` (kind `update`); spec §5, §7.
 
 1. **MVP = M-Local (B01–B16)**: login → claim hub → pair + name → Home toggle with honest pending/rollback → device detail, in cloud dev and LAN build. Validate with quickstart Q1–Q7.
 2. Then post-M-Local in G7 parallel (Automate, RuleEditor core, Me, arrange, history), G8 (editor UI, sheets), desktop, PWA polish.
-3. Opus only on B05, B06, B10, B18, B22 (plus T034 interface in B07); everything else sonnet/haiku as tagged.
+3. Post-integration hardening in G11 (B26): auth domain fallback, onboarding tab state, realtime events, rule editor condition/action deletion & operator filtering.
+4. Opus only on B05, B06, B10, B18, B22 (plus T034 interface in B07); everything else sonnet/haiku as tagged.

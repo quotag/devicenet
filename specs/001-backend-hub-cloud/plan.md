@@ -74,7 +74,8 @@ apps/api/
 │         services/{claimCode.ts, sealedBox.ts, secrets.ts, emqxAdmin.ts})
 └── test/ (unit/*.test.ts, emu/*.test.ts, rules/firestore.rules.test.ts)
 tools/dev-cloud-broker/ (src/index.ts lib + cli, test/)
-tools/dev/run.mjs   tools/smoke/local.mjs   tools/check-tools.mjs   (scripts/fetch-tools.mjs exists on main)
+tools/dev/run.mjs   tools/smoke/local.mjs   tools/check-tools.mjs   (scripts/fetch-tools.mjs, scripts/package-agent-win.mjs)
+docs/ (runbook-local.md, runbook-gcp-deploy.md)
 infra/ (firestore.rules [verbatim copy], firestore.indexes.json, terraform/*.tf, emqx/cluster.hocon, vm/{docker-compose.yml, Caddyfile})
 installers/ (versions.json, windows/{build-sea.mjs, sea-config.json, winsw.xml, install.ps1}, linux/{docker-compose.yml, install.sh, devicenet.service})
 ```
@@ -92,7 +93,7 @@ lan/ Fastify :8080 → /api/*, /setup, static apps/web lan build
 - **Boot order**: config → logger → SQLite → supervisor (local broker, then Z2M; wait `bridge/state online` ≤ 60 s) → local link → driver → registry (from SQLite) → LAN server → claim state: unclaimed → claim client; claimed → sync (signIn) + cloud link + (later) engine. Claim completion triggers the claimed path live, no restart.
 - **Single writer of `t/…` topics** is `publisher`; both links receive identical bytes; republish retained state/status/pairing on any link `connect`.
 - **Firestore writes** go through `ConfigStore` (in-memory fake in unit tests) and touch only the hub column of `firestore.rules`.
-- **OQ-driven behaviours**: rename → description (OQ-1); events `expireAt` Timestamp converter (OQ-4); token refresh on boot failure (OQ-5); cloud scheme by env (OQ-8); events create-only (OQ-9).
+- **OQ-driven behaviours**: rename → description (OQ-1); events `expireAt` Timestamp converter (OQ-4); token refresh on boot failure (OQ-5); cloud scheme by env (OQ-8); events create-only (OQ-9); target state awareness in engine; chained timeouts > 24 days; auto-unclaim on cloud deletion.
 
 ## Milestones & implementation phases
 
@@ -106,20 +107,20 @@ Acceptance = quickstart.md "M-Local validation" steps 1–7 + `pnpm smoke` green
 | **P1 Scaffold** | packages `@devicenet/hub-agent`, `@devicenet/api`, `@devicenet/dev-cloud-broker`; tsconfig (extends root), Vitest config, `firebase.json`, `infra/firestore.rules` verbatim copy, (`installers/versions.json` + `scripts/fetch-tools.mjs` already on main: Mosquitto 2.0.22, Z2M 2.14.2) | `pnpm -r typecheck && pnpm -r test` |
 | **P2 Hub core on mock Z2M** | config/log/SQLite store; mock-z2m + TS011F fixture; Z2M driver (FR-H03, 000 data-model §4, rename via description OQ-1); registry + publisher (FR-H04, realtime §2.3/§2.5); set queue + validation + `set.rejected`/`device_offline` (FR-H05, §8); commands dispatcher + dedupe + 5 s ack guard (`pairing.*`, `device.rename`, `state.republish`, `config.resync`); pairing (FR-H06) with device creation via `ConfigStore` fake; local link + embedded aedes fallback | `pnpm --filter @devicenet/hub-agent test` |
 | **P3 api M-Local** | Fastify skeleton + Admin SDK (emulator env) + auth plugins; `/healthz` (OQ-10); bootstrap FR-A01 (claims OQ-12); claim-codes; claim transaction + sealed box FR-A02 (OQ-3); credential GET FR-A03 (404/200/410); hub token FR-A07; webhook FR-A05 status + LWT + idempotency (OQ-2); rate limits; rules tests | `pnpm --filter @devicenet/api test && pnpm --filter @devicenet/api test:emu` |
-| **P4 Dev broker + hub cloud** | `tools/dev-cloud-broker` (R8); claim client FR-H02 (keys, 15-min code loop, 3 s poll, decrypt, `credentials.json`, live transition, `reset` CLI); Firestore sync FR-H07 (signIn + emulator, listeners `devices`/`sites/{siteId}`, device create/update, event uploader, reconciler, config snapshot); cloud link + LWT + heartbeat + reconnect republish FR-H10 | `pnpm --filter @devicenet/dev-cloud-broker test && pnpm --filter @devicenet/hub-agent test` |
+| **P4 Dev broker + hub cloud** | `tools/dev-cloud-broker` (R8); claim client FR-H02 (keys, 15-min code loop, 3 s poll, decrypt, `credentials.json`, live transition, `reset` CLI, LAN reset `POST /setup/reset`, auto-unclaim on cloud deletion); Firestore sync FR-H07 (signIn + emulator, listeners `devices`/`sites/{siteId}`, device create/update, event uploader, reconciler, config snapshot); cloud link + LWT + heartbeat + reconnect republish FR-H10 | `pnpm --filter @devicenet/dev-cloud-broker test && pnpm --filter @devicenet/hub-agent test` |
 | **P5 Supervisor + real Z2M + LAN** | COM detection R2; Mosquitto conf/passwd/acl + spawn (FR-H11 ACL); Z2M `configuration.yaml` + spawn + `bridge/state` wait; watchdog/backoff/crashloop warning FR-H01; LAN Fastify FR-H11: `/api/health`, `/api/config` (ETag), `/setup` (OQ-11), static `lan.webDir` (OQ-7), private-IP guard | `pnpm --filter @devicenet/hub-agent test && pnpm tools:check` |
 | **P6 Dev orchestration + gate** | `tools/dev/run.mjs` (R14), root scripts `dev`, `dev:real`, `smoke`, `tools:*`; `tools/smoke/local.mjs`; walk quickstart M-Local steps in mock mode | `pnpm dev` (manual) + `pnpm smoke` < 30 s |
 
 ### After M-Local
 | Phase | Scope | Exit check |
 |---|---|---|
-| **P7 Automation engine** | rules/scenes listeners + `rev/appliedRev` + `config.applied`; compile; property trigger rising edge + `for` + `changed`; conditions (all/any 1 level, timeWindow overnight, dayOfWeek, sun); runner (sequential, cancellable delay, `RunProgress`, `runScene` 1 level, `notify`); `scene.run`, `actions.test`; broken detection (FR-H08, realtime §5); lastRunAt coalescing | `pnpm --filter @devicenet/hub-agent test -- automation` |
-| **P8 Scheduler + sun** | croner tz = site.timezone, reschedule on site change; suncalc daily 00:05; `site_missing_coordinates`; missed-run warning (OQ-6) | `… test -- scheduler` |
+| **P7 Automation engine** | rules/scenes listeners + `rev/appliedRev` + `config.applied`; compile; property trigger rising edge + `for` + `changed`; conditions (all/any 1 level, timeWindow overnight, dayOfWeek, sun); runner (sequential, cancellable delay, `RunProgress`, `runScene` 1 level, `notify`); `scene.run`, `actions.test`; broken detection (FR-H08, realtime §5); lastRunAt coalescing; target state awareness (skip redundant commands); initial timer eval on load/rebuild | `pnpm --filter @devicenet/hub-agent test -- automation` |
+| **P8 Scheduler + sun** | croner tz = site.timezone, reschedule on site change; suncalc daily 00:05; `site_missing_coordinates`; missed-run warning (OQ-6); chained timeouts > 24 days (`MAX_TIMEOUT_MS = 24 * 86_400_000`) | `… test -- scheduler` |
 | **P9 History + events log** | `history` writes ≤1/10 s, retention 7 d / 30 d, hourly cleanup; `GET /api/history/{deviceId}/{property}`; `history.get` ≤300 pts ≤2 s; `GET /api/events` (FR-H09) | `… test -- history` |
-| **P10 Device lifecycle** | `device.remove` (force, Firestore `removed`, retained clear, rules/scenes broken, `device.removed`), `device.ping`; availability → `device.online/offline`; startup recovery of Z2M devices missing in Firestore (FR-H06) | hub-agent tests |
+| **P10 Device lifecycle** | `device.remove` (force, Firestore `removed`, retained clear, rules/scenes broken, `device.removed`), `device.ping`; availability → `device.online/offline`; startup recovery of Z2M devices missing in Firestore (FR-H06); pre-interviewed discovery on `pairing.start`; re-pairing SQLite conflict resolution (`DELETE FROM devices WHERE external_id = ? AND id != ? AND json_extract(doc, '$.status') = 'removed'`) | hub-agent tests |
 | **P11 api remainder** | EMQX auth/acl FR-A04 (regex, sha256, 60 s cache); `DELETE /v1/hubs/{id}` FR-A06 (EMQX REST kick, devices removed, rules broken); `DELETE /v1/tenants/me` → 202 placeholder; helmet/CORS final | api unit + emu tests |
-| **P12 Infra (write only)** | Terraform (VM, firewall, Cloud Run, Firestore + TTL, Hosting, Secret Manager), `emqx/cluster.hocon` (spec §5), VM compose + Caddyfile, `firestore.indexes.json` | `terraform fmt -check`/`validate` if installed; **never apply** |
-| **P13 Installers** | `versions.json` final; Windows SEA + native prebuilds + bundled `node.exe` for Z2M + winsw + `install.ps1`; Linux compose + `install.sh` + systemd (FR-H12, R11) | build script dry-run; `install.ps1 -WhatIf` |
+| **P12 Infra (write only) & GCP deploy** | Terraform (VM, firewall, Cloud Run, Firestore + TTL, Hosting, Secret Manager), `emqx/cluster.hocon` (spec §5), VM compose + Caddyfile, `firestore.indexes.json`; GCP Production Deployment Runbook (`docs/runbook-gcp-deploy.md`) | `terraform fmt -check`/`validate` if installed; **never apply** |
+| **P13 Installers & Packaging** | `versions.json` final; Windows SEA + native prebuilds + bundled `node.exe` for Z2M + winsw + `install.ps1` (`scripts/package-agent-win.mjs`, `installers/windows/build-sea.mjs`); Linux compose + `install.sh` + systemd (FR-H12, R11) | build script dry-run; `install.ps1 -WhatIf` |
 | **P14 NFR hardening** | pino rotation 7 d + payload redaction test; latency histogram (`sentAt`→ack); RAM/CPU check script; WAN-loss integration test with mock Z2M (rules keep running, events not duplicated) | hub-agent tests |
 
 ## Test plan (constitution VI mapping)

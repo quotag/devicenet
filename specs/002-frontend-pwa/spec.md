@@ -33,6 +33,8 @@ Quy tắc:
 - `transport/` là **nơi duy nhất** import `mqtt` và `firebase/firestore`. Feature chỉ dùng hooks `useDeviceState(id)`, `useDevices()`, `useRules()`, `useHub()`, `useSendCommand()`.
 - Zustand selector theo `deviceId` để `DeviceTile` không re-render khi tile khác đổi.
 - Zod parse **mọi** message MQTT (`DeviceState`, `HubStatus`, `PairingState`, `RunProgress`, `HubEvent`, `CommandAck`) — message không parse được → `console.warn` + bỏ, không crash.
+- Realtime Event Ingestion: `inbound.ts` bắt topic `t/{tenant}/h/{hubId}/events/+` và `devicenet/...`, parse `HubEvent` để hiển thị toast cảnh báo hoặc cập nhật lịch sử hoạt động tức thì.
+- HTTP 304 Not Modified: `LanConfigSource` gửi header `If-None-Match` kèm ETag của snapshot trước; nhận 304 thì giữ nguyên store, tránh re-render thừa.
 
 ## 4. Yêu cầu chức năng theo màn
 
@@ -58,12 +60,16 @@ Quy tắc:
 Tên trong ngoặc = giá trị prop trong `data-props` của artboard để xem từng state.
 
 ### FR-F00 S-00 Đăng nhập (US-01)
-- `signInWithPopup` (desktop) / `signInWithRedirect` (iOS PWA standalone — popup bị chặn). Sau đăng nhập: nếu token thiếu claim `tenant` → `POST /v1/tenants/bootstrap` → `getIdToken(true)`.
+- Cấu hình Firebase Auth: hỗ trợ biến môi trường `VITE_FIREBASE_AUTH_DOMAIN` (`firebaseAuthDomain`), khởi tạo `initializeApp` với `authDomain` mặc định `${projectId}.firebaseapp.com`.
+- `signInWithGoogle`: ưu tiên `signInWithPopup` (desktop/web); tự động fallback sang `signInWithRedirect` khi popup bị chặn (`auth/popup-blocked`) hoặc trên iOS PWA standalone.
+- Xử lý lỗi đăng nhập: âm thầm bỏ qua (không hiện toast lỗi) khi người dùng chủ động đóng popup (`auth/popup-closed-by-user`, `auth/cancelled-popup-request`). Các mã lỗi khác hiển thị toast kèm mã lỗi: `${vi.s00.error} (${code})`.
+- Phiên làm việc (Session): `applyAuthUser` lưu trước `idToken` và thông tin `user` vào `sessionStore`, gửi kèm `Authorization: Bearer <idToken>` trong request `POST /v1/tenants/bootstrap` để xác thực Cloud Run; sau khi bootstrap hoàn tất sẽ làm mới token (`getIdToken(true)`) để nạp custom claims `tenant` và `role:"user"`.
 - Điều hướng: tenant chưa có hub → `/onboarding/hub` (S-10); có → `/home`.
 - States: mặc định, loading (nút), lỗi (toast). Đăng xuất: `signOut`, `terminate` Firestore + `clearIndexedDbPersistence`, ngắt MQTT, xóa Zustand.
 
 ### FR-F01 S-01 Home (US-04/05/06/07/15)
 - Header: `SiteSwitcher` (SH-1) · nút + (SH-2). Banner `StatusBanner` khi `hubStatus.online=false` ("Hub {tên} đang offline · lần cuối {HH:mm}"), LAN build ("Đang dùng chế độ LAN · {ip}"), MQTT reconnecting ("Đang kết nối lại…").
+- Điều hướng TabBar & DesktopShell: tab **Automate** tự động chuyển sang trạng thái disabled (mờ, không thể bấm, có tooltip giải thích) khi tài khoản chưa có hub nào (trạng thái onboarding). Sau khi hoàn tất claim hub, tab Automate kích hoạt bình thường.
 - `RoomChips`: "Tất cả" + rooms theo `order` + chip `+` dashed; giữ lâu (500 ms) chip room → SH-5 `edit` (FR-F12; đổi tên/xóa room, xóa → devices `roomId=null`). Chip `+` → SH-5 `newRoom`.
 - `DeviceGrid`: `layouts/{site}.filters[filter]` (D-02); device chưa có trong layout → thêm cuối theo `createdAt`. Tile 1×1 171×120 / 2×1 358×120, gap 16, 2 cột (desktop 4).
 - `DeviceTile` nội dung theo Design Spec "Quy ước nội dung": hàng 1 icon + chấm online; hàng 2 giá trị `primaryProperty` format vi-VN (`0,38`) + đơn vị, không có sensor → "Bật"/"Tắt"; hàng 3 tên + room (chỉ khi filter=all); toggle góc dưới phải (≥ 44 pt) nếu có `toggleProperty`. 2×1: cột phải 2 sensor phụ (lấy 2 sensor numeric tiếp theo). Variants/states: on/off/pending/offline/arranging/highlight (viền accent fade 2 s sau khi thêm từ S-11).
@@ -73,21 +79,21 @@ Tên trong ngoặc = giá trị prop trong `data-props` của artboard để xem
 - Bấm thân tile → `/device/$deviceId` (S-20).
 
 ### FR-F02 S-02 Automate (US-08/09/14/16)
-- `SegmentedTabs` "Tap-to-run" · "Automation" (vuốt ngang đổi tab). Nút + → SH-2 (Tạo scene / Tạo automation).
+- `SegmentedTabs` "Tap-to-run" · "Automation" (vuốt ngang đổi tab). Trạng thái sub-tab đang chọn được lưu giữ khi chuyển sang Rule Editor và quay lại. Nút + → SH-2 (Tạo scene / Tạo automation).
 - Scene grid 2 cột `SceneCard`: chạm → `sendCommand({type:"scene.run"})` → trạng thái từ `runs` ("Đang chạy {done} / {total}…", vòng tiến độ) → `ok` tick 1 s / `partial|failed` badge "Lỗi"; giữ lâu → SH-6 (FR-F13: Sửa / Xóa). Dòng chú thích "Chạm để chạy · giữ lâu để sửa hoặc xóa".
 - `RuleCard`: chạm → S-30 sửa; giữ lâu → SH-6 như SceneCard. Nội dung: tên, `summarizeTrigger()` 1 dòng, `Switch` (`enabled`, ghi Firestore `rev+1`), hàng dưới: badge `OK`/`Lỗi`/`Đang đồng bộ` + "Chạy lần cuối {HH:mm}" / "Đã lưu, hub đang nạp…" / "Thiết bị không còn: {tên}" / "Đã tắt · chạy lần cuối…". `syncing` = `appliedRev !== rev`. Broken → switch disabled.
 - Trống: `SuggestionCard` ×3 sinh từ thiết bị hiện có (template trong `features/automate/suggestions.ts`: tắt hết ổ cắm; bật đèn sân; đi ngủ / tắt lúc 23:00; báo > 1500 W; mặt trời lặn) → mở S-30 với rule điền sẵn.
 
 ### FR-F03 S-03 Me (US-15/16) & S-40 Cài đặt (US-12)
-- Thẻ tài khoản (avatar, tên, email, "tenant {name}"). Mục Hub: `HubRow` (chấm online/offline, "v{agentVersion} · {deviceCount} thiết bị · {site}") → `S03-ChiTietHub` (trạng thái online/offline, Thông tin: tên, site, số thiết bị, "Automation · scene"; Kết nối: địa chỉ LAN `hub.lanUrl` + "Mở"; Phiên bản: agent, Zigbee2MQTT; "Đổi tên"; "Gỡ hub" → dialog xác nhận có checkbox (không dùng SH-4) → `DELETE /v1/hubs/{id}` → về S-03); "Thêm hub" → S-10. Chưa có hub → card hướng dẫn.
+- Thẻ tài khoản (avatar, tên, email, "tenant {name}"). Mục Hub: `HubRow` (chấm online/offline, "v{agentVersion} · {deviceCount} thiết bị · {site}") → `S03-ChiTietHub` (trạng thái online/offline, Thông tin: tên, site, số thiết bị, "Automation · scene"; Kết nối: địa chỉ LAN `hub.lanUrl` + "Mở"; Phiên bản: agent, Zigbee2MQTT; "Đổi tên"; "Gỡ hub" → dialog xác nhận có checkbox "Tôi hiểu..." → `DELETE /v1/hubs/{id}` → về S-03); "Thêm hub" → S-10. Chưa có hub → card hướng dẫn.
 - Site & Room: danh sách site mở ra room với số thiết bị; kéo sắp `order`; chạm room → SH-5 `edit`; "Thêm site hoặc room" → SH-5 `pick` (Thêm room / Thêm site).
 - Có device `status:"new"` → dòng `Badge` "Mới" + "1 thiết bị chưa đặt tên" trong nhóm Hub (prop `unnamed`) → S-11 bước 3.
 - Lịch sử: 5 `EventRow` gần nhất từ Firestore `events` (`ts desc`, types `rule.fired|scene.run|rule.broken|notify`), "Xem tất cả (7 ngày)" → `S03-LichSu`: chip "Tất cả" / "Chỉ lỗi", nhóm theo ngày ("Hôm nay", "Hôm qua", "Thứ 4, 14/10"), mỗi dòng giờ + tên + loại (Automation / Scene · chạy tay / Thông báo đã gửi / Automation hỏng: …) + Badge OK/Lỗi; cuối "Hiện 7 ngày gần nhất"; trống → "Chưa có gì trong 7 ngày qua".
 - S-40: Hiển thị (ngôn ngữ v1 chỉ "Tiếng Việt", đơn vị °C/°F, giao diện Sáng/Tối/Hệ thống → `members/{uid}.prefs` + local); Kết nối: "Chế độ LAN" hiện `hub.lanUrl` + nút "Mở" (`window.open(lanUrl, "_blank")`) — **không** có toggle tự động (D-17); Thông báo: "Sắp có" (Phase 2); Tài khoản: Đăng xuất; **ẩn** "Xóa tài khoản" (D-16); Về app: phiên bản (từ `__APP_VERSION__`), hub agent `v{agentVersion} · Zigbee2MQTT {z2mVersion}`.
 
 ### FR-F04 S-10 Thêm hub (US-02) — Stepper 3 bước
-1. Cài agent: `SegmentedTabs` Windows/Linux; khối lệnh copy (`navigator.clipboard`); nút "Tôi đã cài", "Xem hướng dẫn chi tiết".
-2. Nhập mã: `CodeInput` 8 ô, tự nhảy, paste cả chuỗi, chỉ nhận `[A-HJ-NP-Z2-9]`; nút "Quét QR trên trang setup" (`@zxing/browser`, parse `devicenet://claim?code=`); dòng "Mã hết hạn sau **15 phút**" (sửa wireframe 10 → 15). Nút "Kết nối" → `POST /v1/hubs/claim {code, siteId, name:"Hub {site}"}`.
+1. Cài agent: `SegmentedTabs` Windows/Linux; khối lệnh copy tự động (`navigator.clipboard`): Linux `curl -fsSL https://<url>/agent/install.sh | sudo bash -s -- --claim-code <code> --api-url <url>`, Windows `irm https://<url>/agent/install.ps1 | iex`; nút "Tôi đã cài", "Xem hướng dẫn chi tiết".
+2. Nhập mã: `CodeInput` 8 ô, tự nhảy, paste cả chuỗi, chỉ nhận `[A-HJ-NP-Z2-9]`; nút "Quét QR trên trang setup" (`@zxing/browser`, parse `devicenet://claim?code=`); hướng dẫn truy cập trang setup tại `http://<ip>:8080/setup`; dòng "Mã hết hạn sau **15 phút**" (sửa wireframe 10 → 15). Nút "Kết nối" → `POST /v1/hubs/claim {code, siteId, name:"Hub {site}"}`.
    Lỗi: 400 → ô đỏ rung 300 ms, "Mã sai hoặc đã hết hạn.", nút "Lấy mã mới ở hub"; 409 → giải thích + lệnh `devicenet-agent reset`.
 3. Kết nối: dòng trạng thái "Đang xác nhận mã" → "Đang chờ hub" → "Hub đã online" khi `onSnapshot hubs/{id}.online===true` **hoặc** MQTT `status.online===true` (cái nào tới trước); > 60 s → gợi ý kiểm tra mạng. Form tên hub + chọn site (có "Site mới") → "Hoàn tất" / lần đầu "Thêm thiết bị ngay" → S-11.
 
@@ -112,8 +118,14 @@ Tên trong ngoặc = giá trị prop trong `data-props` của artboard để xem
 
 ### FR-F08 S-30 Soạn rule / scene (US-08/09/10)
 - Header Hủy · tiêu đề ("Automation mới" / tên) · Lưu (disabled đến khi Zod `Rule`/`Scene` parse OK). Ô tên + chọn icon.
+- Tự động khắc phục siteId (Auto-heal): khi `uiStore.siteId` bị cũ, trống hoặc trỏ tới site không tồn tại, tự động chuyển về site hợp lệ đầu tiên trong danh sách `configStore.sites`.
 - `RuleBlock` Khi (1 trigger) / Và nếu (0..n, toggle "Tất cả (AND)" · "Bất kỳ (OR)") / Thì (1..n, kéo sắp `@dnd-kit`). Scene: ẩn Khi và Và nếu.
-- Sheet chọn trigger: Thiết bị / Thời gian / Mặt trời. Thiết bị: chọn device → property (control+sensor) → phép so sánh **đủ 7**: nhỏ hơn, ≤, bằng, ≠, ≥, lớn hơn, "đổi sang" (`changed` ẩn giá trị) → giá trị (bàn phím số + đơn vị; binary → Bật/Tắt) → "Liên tục trong {n} phút" (lưu `for = n*60`). Thời gian: giờ + ngày trong tuần. Mặt trời: mọc/lặn ± phút.
+- Xóa điều kiện / hành động: cung cấp nút xóa (`onDelete`) trong `ConditionSheet` ("Xóa điều kiện") và `ActionSheet` ("Xóa hành động") để người dùng gỡ bỏ từng mục đã thêm.
+- Lọc phép so sánh (Operator filtering): chỉ hiển thị các phép so sánh phù hợp với kiểu dữ liệu thuộc tính:
+  - Thuộc tính `binary`: chỉ hiển thị "Bằng" (`eq`), "Khác" (`neq`) với giá trị Bật/Tắt.
+  - Thuộc tính `numeric`: hiển thị đầy đủ 7 phép so sánh ("nhỏ hơn", "≤", "bằng", "≠", "≥", "lớn hơn", "trong khoảng").
+  - Thuộc tính `enum`: hiển thị `eq`, `neq` kèm danh sách giá trị enum khả dụng.
+- Sheet chọn trigger: Thiết bị / Thời gian / Mặt trời. Placeholder hiển thị "Không có thiết bị khả dụng" kèm chú thích khi không tìm thấy thiết bị nào trong site hiện tại. Thời gian: giờ + ngày trong tuần. Mặt trời: mọc/lặn ± phút.
 - Sheet thêm action: Đặt thiết bị / Chờ / Chạy scene / Thông báo.
 - Dưới: `Switch` "Bật automation" ("Chạy trên hub, kể cả khi mất internet"; chưa lưu → "Bật được sau khi lưu"); nút "Chạy thử (chỉ phần Thì)" → `actions.test` → hiện `runs` inline.
 - Lưu: Firestore `rev+1`, `hubId` = hub của site (v1 duy nhất) → `StatusBanner reconnecting` "Đã lưu, hub đang nạp… (tối đa 5 giây)" tới khi `appliedRev===rev` → về S-02; quá 5 s → về S-02 với badge "Đang đồng bộ" (không lỗi).
@@ -180,7 +192,7 @@ SH-6: "Sửa" · "Đổi tên, icon, hành động" · "Xóa" · "Xóa "Đi ng�
 Toast: "Không nhận được phản hồi từ Ổ cắm quạt" · "Không xóa được thiết bị. Thử lại sau." · "Có bản mới" · "Tải lại".
 Desktop: "Sắp xếp" · "+ Thêm" · "Thêm thiết bị" · "Đang bật" · "Chạy thử" · "Xem trước" · "Bật automation" · "Trạng thái" · "Đã nạp · rev 14" · "Chạy lần cuối" · "Tổng 7 ngày" · "5 lần · 0 lỗi" · "Lịch sử" · "Xóa automation".
 SH-4: "Xóa "{tên}"?" · "Hub sẽ gỡ thiết bị khỏi mạng Zigbee." · "automation đang dùng thiết bị này sẽ bị đánh dấu lỗi:" · "Sẽ lỗi" · "Tôi hiểu, lịch sử và biểu đồ của thiết bị sẽ mất." · "Xóa vĩnh viễn?" · "Không hoàn tác được. Muốn dùng lại, bạn phải ghép nối thiết bị từ đầu." · "Giữ lại".
-S-30: "Khi" · "Và nếu" · "Thì" · "Tất cả (AND)" · "Bất kỳ (OR)" · "Không bắt buộc · 0 điều kiện" · "+ Thêm điều kiện" · "Chưa có hành động nào" · "Bật automation" · "Chạy trên hub, kể cả khi mất internet" · "Bật được sau khi lưu" · "Chạy thử (chỉ phần Thì)" · "Chọn 1 trigger" · "Thiết bị" / "Thời gian" / "Mặt trời" · "Liên tục trong".
+S-30: "Khi" · "Và nếu" · "Thì" · "Tất cả (AND)" · "Bất kỳ (OR)" · "Không bắt buộc · 0 điều kiện" · "+ Thêm điều kiện" · "Chưa có hành động nào" · "Bật automation" · "Chạy trên hub, kể cả khi mất internet" · "Bật được sau khi lưu" · "Chạy thử (chỉ phần Thì)" · "Chọn 1 trigger" · "Thiết bị" / "Thời gian" / "Mặt trời" · "Liên tục trong" · "Xóa điều kiện" · "Xóa hành động" · "Không có thiết bị khả dụng trong site này" · "Sửa điều kiện" · "Sửa hành động".
 S-40/Me: "Cài đặt" · "Hiển thị" · "Kết nối" · "Chế độ LAN" · "Điều khiển trực tiếp qua hub khi cùng mạng Wi‑Fi, không cần internet" · "Mở" · "Thông báo" · "Sắp có" · "Tài khoản" · "Đăng xuất" · "Về app" · "Hub" · "Thêm hub" · "Chưa có hub" · "Cài agent lên máy có dongle Zigbee, nhập mã 8 ký tự là xong trong 3 phút." · "Site & Room" · "Thêm site hoặc room" · "Lịch sử" · "Xem tất cả (7 ngày)" · "1 thiết bị chưa đặt tên" · "Mới".
 Chi tiết hub: "Hub Nhà" · "Online" / "Offline" · "cập nhật 8 giây trước" · "Thông tin" · "Tên" · "Site" · "Thiết bị" · "Automation · scene" · "Kết nối" · "Địa chỉ LAN" · "http://192.168.1.20:8080 · địa chỉ lần cuối hub báo" · "Mở" · "Phiên bản" · "Hub agent" · "Zigbee2MQTT" · "Đổi tên" · "Gỡ hub" · "Gỡ "Hub Nhà"?" · "6 thiết bị của hub này sẽ bị gỡ khỏi tài khoản và 4 automation sẽ bị đánh dấu lỗi. Agent trên máy ngừng kết nối; muốn dùng lại phải nhập mã mới." · "Tôi hiểu, thiết bị phải ghép nối lại từ đầu.".
 Lịch sử: "Lịch sử" · "Tất cả" · "Chỉ lỗi" · "Hôm nay" · "Hôm qua" · "Thứ 4, 14/10" · "Automation" · "Scene · chạy tay" · "Thông báo đã gửi" · "Hiện 7 ngày gần nhất" · "Chưa có gì trong 7 ngày qua" · "Lần chạy của scene, automation và thông báo sẽ hiện ở đây.".

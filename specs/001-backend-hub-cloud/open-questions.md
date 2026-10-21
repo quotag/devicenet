@@ -30,3 +30,12 @@ Rule (constitution "Quy trình" + orchestration decision 2026-10-18): conflicts 
 - TODO-OQ-B15-2: a rule that fires while its previous run is still in progress is ignored ("single" mode), not restarted or queued.
 - TODO-OQ-B15-3: a `setProperty` step whose state is not confirmed within `SET_CONFIRM_TIMEOUT_MS` counts as failed (`not_confirmed`) → run `partial`/`failed`.
 - TODO-OQ-B15-4: `runScene` depth: any top-level run (rule, scene, test) may run one scene; that scene's own `runScene` steps fail `scene_nesting_too_deep`. Nested scene actions run inline inside the one step (no separate runId / `scene.run` event).
+
+## Field Hardening (post-62d605a)
+- RESOLVED TODO-OQ-POST-1: Full SEA build & packaging (`scripts/package-agent-win.mjs`, `installers/windows/build-sea.mjs`, `installers/linux/install.sh`). Linux & Windows installers tested with one-line install scripts.
+- RESOLVED TODO-OQ-POST-2: Re-pairing removed devices in SQLite. When a device that was marked `removed` in SQLite is paired again with the same IEEE address, SQLite unique constraint on `external_id` would throw. Solved: `DELETE FROM devices WHERE external_id = ? AND id != ? AND json_extract(doc, '$.status') = 'removed'` prior to upsert.
+- RESOLVED TODO-OQ-POST-3: Discovery of devices interviewed prior to pairing start. Solved: on `pairing.start`, scan driver's `knownDevices()` and emit `device.found` for pre-interviewed devices.
+- RESOLVED TODO-OQ-POST-4: Hub unclaim when hub doc deleted in cloud. Solved: `firestoreStore.onHubDeleted` listener triggers `goUnclaimed()`, cleaning up cloud bridge, detaching listeners, deleting `credentials.json`, and restarting local claim code generation.
+- RESOLVED TODO-OQ-POST-5: Node.js 32-bit signed int overflow on long timeouts (> 24.8 days). Solved: `MAX_TIMEOUT_MS = 24 * 86_400_000` with chained timeouts.
+- RESOLVED TODO-OQ-POST-6: Redundant commands in automation engine. Solved: target state awareness checks registry target value before issuing driver command.
+
